@@ -128,9 +128,9 @@ object TicTacToe extends App {
   }
 
   final case class Board private (value: Vector[Vector[Option[Mark]]]) {
-    final def place(x: Int, y: Int, mark: Mark): Option[Board] =
-      if (x >= 0 && y >= 0 && x < 3 && y < 3)
-        Some(copy(value = value.updated(x, value(x).updated(y, Some(mark)))))
+    final def place(row: Int, col: Int, mark: Mark): Option[Board] =
+      if (row >= 0 && col >= 0 && row < 3 && col < 3)
+        Some(copy(value = value.updated(row, value(row).updated(col, Some(mark)))))
       else None
 
     final def render =
@@ -152,28 +152,28 @@ object TicTacToe extends App {
         wonBy(0, 2, 1, 0, mark)
 
     private final def wonBy(
-        x0: Int,
-        y0: Int,
-        xInc: Int,
-        yInc: Int,
+        row0: Int,
+        col0: Int,
+        rowInc: Int,
+        colInc: Int,
         mark: Mark
     ): Boolean =
-      extractLine(x0, y0, xInc, yInc).collect { case Some(x) => x }.toList == List(
+      extractLine(row0, col0, rowInc, colInc).collect { case Some(v) => v }.toList == List(
         mark,
         mark,
         mark
       )
 
     private final def extractLine(
-        x0: Int,
-        y0: Int,
-        xInc: Int,
-        yInc: Int
+        row0: Int,
+        col0: Int,
+        rowInc: Int,
+        colInc: Int
     ): Iterable[Option[Mark]] =
       for {
-        x <- (x0 to (x0 + xInc * 2))
-        y <- (y0 to (y0 + yInc * 2))
-      } yield value(x)(y)
+        row <- (row0 to (row0 + rowInc * 2))
+        col <- (col0 to (col0 + colInc * 2))
+      } yield value(row)(col)
   }
   object Board {
     final val empty = new Board(Vector.fill(3)(Vector.fill(3)(None)))
