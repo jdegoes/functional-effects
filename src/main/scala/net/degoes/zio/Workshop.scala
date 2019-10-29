@@ -68,7 +68,7 @@ object NumberGuesser extends App {
 
   def analyzeAnswer(random: Int, guess: String) =
     if (random.toString == guess.trim) putStrLn("You guessed correctly!")
-    else putStrLn("You did not guess correctly. The answer was ${random}")
+    else putStrLn(s"You did not guess correctly. The answer was ${random}")
 
   /**
     * EXERCISE 5
