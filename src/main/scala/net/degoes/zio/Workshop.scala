@@ -166,6 +166,48 @@ object CatIncremental extends App {
     ???
 }
 
+object ComputePi extends App {
+  import zio.random._ 
+  import zio.console._ 
+
+  /**
+   * Some state to keep track of all points inside a circle,
+   * and total number of points.
+   */
+  final case class PiState(
+    inside: Ref[Long],
+    total: Ref[Long]
+  )
+
+  /**
+   * A function to estimate pi.
+   */
+  def estimatePi(inside: Long, total: Long): Double = 
+    (inside.toDouble / total.toDouble) * 4.0
+
+  /**
+   * A helper function that determines if a point lies in
+   * a circle of 1 radius.
+   */
+  def insideCircle(x: Double, y: Double): Boolean = 
+    Math.sqrt(x * x + y * y) <= 1.0
+
+  /**
+   * An effect that computes a random (x, y) point.
+   */
+  val randomPoint: ZIO[Random, Nothing, (Double, Double)] = 
+    nextDouble zip nextDouble 
+
+  /**
+   * EXERCISE 12
+   * 
+   * Build a multi-fiber program that estimates the value of `pi`. Print out 
+   * ongoing estimates continuously until the estimation is complete.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
 /**
   * GRADUATION PROJECT
   *
