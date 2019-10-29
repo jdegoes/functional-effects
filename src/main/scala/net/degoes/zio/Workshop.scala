@@ -112,6 +112,66 @@ object AlarmApp extends App {
     ???
 }
 
+object Cat extends App {
+  import zio.console._
+  import zio.blocking._
+  import java.io.IOException
+
+  /**
+    * EXERCISE 8
+    *
+    * Implement a function to read a file on the blocking thread pool, storing
+    * the result into a string.
+    */
+  def readFile(file: String): ZIO[Blocking, IOException, String] = ???
+
+  /**
+    * EXERCISE 9
+    *
+    * Implement a version of the command-line utility "cat", which dumps the
+    * contents of the specified file to standard output.
+    */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
+object CatIncremental extends App {
+  import zio.console._
+  import zio.blocking._
+  import java.io._
+
+  /**
+    * EXERCISE 10
+    *
+    * Implement all missing methods of `FileHandle`. Be sure to do all work on
+    * the blocking thread pool.
+    */
+  final case class FileHandle private (private val is: InputStream) {
+    final def close: ZIO[Blocking, IOException, Unit] = ???
+
+    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] = ???
+  }
+  object FileHandle {
+    final def open(file: String): ZIO[Blocking, IOException, FileHandle] = ???
+  }
+
+  /**
+    * EXERCISE 11
+    *
+    * Implement an incremental version of the `cat` utility, using `ZIO#bracket`
+    * or `ZManaged` to ensure the file is closed in the event of error or
+    * interruption.
+    */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
+/**
+  * GRADUATION PROJECT
+  *
+  * Implement a game of tic tac toe using ZIO, then develop unit tests to
+  * demonstrate its correctness and testability.
+  */
 object TicTacToe extends App {
   import zio.console._
 
@@ -128,14 +188,34 @@ object TicTacToe extends App {
   }
 
   final case class Board private (value: Vector[Vector[Option[Mark]]]) {
+
+    /**
+      * Retrieves the mark at the specified row/col.
+      */
+    final def get(row: Int, col: Int): Option[Mark] =
+      value.lift(row).flatMap(_.lift(col)).flatten
+
+    /**
+      * Places a mark on the board at the specified row/col.
+      */
     final def place(row: Int, col: Int, mark: Mark): Option[Board] =
       if (row >= 0 && col >= 0 && row < 3 && col < 3)
-        Some(copy(value = value.updated(row, value(row).updated(col, Some(mark)))))
+        Some(
+          copy(value = value.updated(row, value(row).updated(col, Some(mark))))
+        )
       else None
 
-    final def render =
-      value.map(_.map(_.fold(" ")(_.render)).mkString(" ")).mkString("\n")
+    /**
+      * Renders the board to a string.
+      */
+    def render: String =
+      value
+        .map(_.map(_.fold(" ")(_.render)).mkString(" ", " | ", " "))
+        .mkString("\n---|---|---\n")
 
+    /**
+      * Returns which mark won the game, if any.
+      */
     final def won: Option[Mark] =
       if (wonBy(Mark.X)) Some(Mark.X)
       else if (wonBy(Mark.O)) Some(Mark.O)
@@ -158,11 +238,8 @@ object TicTacToe extends App {
         colInc: Int,
         mark: Mark
     ): Boolean =
-      extractLine(row0, col0, rowInc, colInc).collect { case Some(v) => v }.toList == List(
-        mark,
-        mark,
-        mark
-      )
+      extractLine(row0, col0, rowInc, colInc).collect { case Some(v) => v }.toList == List
+        .fill(3)(mark)
 
     private final def extractLine(
         row0: Int,
@@ -202,22 +279,18 @@ object TicTacToe extends App {
       }
   }
 
-  def renderBoard(board: Board): ZIO[Console, Nothing, Unit] = {
-    val output = board.value
-      .map(_.map(_.fold(" ")(_.render)).mkString(" ", " | ", " "))
-      .mkString("\n---|---|---\n")
+  val TestBoard = Board
+    .fromChars(
+      List(' ', 'O', 'X'),
+      List('O', 'X', 'O'),
+      List('X', ' ', ' ')
+    )
+    .get
+    .render
 
-    putStrLn(output)
-  }
-
+  /**
+    * The entry point to the game will be here.
+    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    renderBoard(
-      Board
-        .fromChars(
-          List(' ', 'O', 'X'),
-          List('O', 'X', 'O'),
-          List('X', ' ', ' ')
-        )
-        .get
-    ) as 0
+    putStrLn(TestBoard) as 0
 }
