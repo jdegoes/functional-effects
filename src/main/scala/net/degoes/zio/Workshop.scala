@@ -219,7 +219,7 @@ object Hangman extends App {
     * Implement an effect that gets a single, lower-case character from
     * the user.
     */
-  lazy val getChoice: ZIO[Console, Nothing, Char] = ???
+  lazy val getChoice: ZIO[Console, IOException, Char] = ???
 
   /**
     * EXERCISE 14
@@ -242,7 +242,7 @@ object Hangman extends App {
     * Implement the main game loop, which gets choices from the user until
     * the game is won or lost.
     */
-  def gameLoop(state0: State): ZIO[Console, IOException, Unit] = ???
+  def gameLoop(ref: Ref[State]): ZIO[Console, IOException, Unit] = ???
 
   def renderState(state: State): ZIO[Console, Nothing, Unit] = {
 
