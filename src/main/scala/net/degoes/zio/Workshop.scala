@@ -167,43 +167,139 @@ object CatIncremental extends App {
 }
 
 object ComputePi extends App {
-  import zio.random._ 
-  import zio.console._ 
+  import zio.random._
+  import zio.console._
 
   /**
-   * Some state to keep track of all points inside a circle,
-   * and total number of points.
-   */
+    * Some state to keep track of all points inside a circle,
+    * and total number of points.
+    */
   final case class PiState(
-    inside: Ref[Long],
-    total: Ref[Long]
+      inside: Ref[Long],
+      total: Ref[Long]
   )
 
   /**
-   * A function to estimate pi.
-   */
-  def estimatePi(inside: Long, total: Long): Double = 
+    * A function to estimate pi.
+    */
+  def estimatePi(inside: Long, total: Long): Double =
     (inside.toDouble / total.toDouble) * 4.0
 
   /**
-   * A helper function that determines if a point lies in
-   * a circle of 1 radius.
-   */
-  def insideCircle(x: Double, y: Double): Boolean = 
+    * A helper function that determines if a point lies in
+    * a circle of 1 radius.
+    */
+  def insideCircle(x: Double, y: Double): Boolean =
     Math.sqrt(x * x + y * y) <= 1.0
 
   /**
-   * An effect that computes a random (x, y) point.
-   */
-  val randomPoint: ZIO[Random, Nothing, (Double, Double)] = 
-    nextDouble zip nextDouble 
+    * An effect that computes a random (x, y) point.
+    */
+  val randomPoint: ZIO[Random, Nothing, (Double, Double)] =
+    nextDouble zip nextDouble
 
   /**
-   * EXERCISE 12
-   * 
-   * Build a multi-fiber program that estimates the value of `pi`. Print out 
-   * ongoing estimates continuously until the estimation is complete.
-   */
+    * EXERCISE 12
+    *
+    * Build a multi-fiber program that estimates the value of `pi`. Print out
+    * ongoing estimates continuously until the estimation is complete.
+    */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
+object Hangman extends App {
+  import zio.console._
+  import zio.random._
+  import java.io.IOException
+
+  /**
+    * EXERCISE 13
+    *
+    * Implement an effect that gets a single, lower-case character from
+    * the user.
+    */
+  lazy val getChoice: ZIO[Console, Nothing, Char] = ???
+
+  /**
+    * EXERCISE 14
+    *
+    * Implement an effect that prompts the user for their name, and
+    * returns it.
+    */
+  lazy val getName: ZIO[Console, IOException, String] = ???
+
+  /**
+    * EXERCISE 15
+    *
+    * Implement an effect that chooses a random word from the dictionary.
+    */
+  lazy val chooseWord: ZIO[Random, Nothing, String] = ???
+
+  /**
+    * EXERCISE 17
+    *
+    * Implement the main game loop, which gets choices from the user until
+    * the game is won or lost.
+    */
+  def gameLoop(state0: State): ZIO[Console, IOException, Unit] = ???
+
+  def renderState(state: State): ZIO[Console, Nothing, Unit] = {
+
+    /**
+      *
+      *  f     n  c  t  o
+      *  -  -  -  -  -  -  -
+      *
+      *  Guesses: a, z, y, x
+      *
+      */
+    val word =
+      state.word.toList
+        .map(c => if (state.guesses.contains(c)) s" $c " else "   ")
+        .mkString("")
+
+    val line = List.fill(state.word.length)(" - ").mkString("")
+
+    val guesses = " Guesses: " + state.guesses.mkString(", ")
+
+    val text = word + "\n" + line + "\n\n" + guesses + "\n"
+
+    putStrLn(text)
+  }
+
+  final case class State(name: String, guesses: Set[Char], word: String) {
+    final def failures: Int = (guesses -- word.toSet).size
+
+    final def playerLost: Boolean = failures > 10
+
+    final def playerWon: Boolean = (word.toSet -- guesses).isEmpty
+
+    final def addChar(char: Char): State = copy(guesses = guesses + char)
+  }
+
+  sealed trait GuessResult
+  object GuessResult {
+    case object Won extends GuessResult
+    case object Lost extends GuessResult
+    case object Correct extends GuessResult
+    case object Incorrect extends GuessResult
+    case object Unchanged extends GuessResult
+  }
+
+  def guessResult(oldState: State, newState: State, char: Char): GuessResult =
+    if (oldState.guesses.contains(char)) GuessResult.Unchanged
+    else if (newState.playerWon) GuessResult.Won
+    else if (newState.playerLost) GuessResult.Lost
+    else if (oldState.word.contains(char)) GuessResult.Correct
+    else GuessResult.Incorrect
+
+  /**
+    * EXERCISE 18
+    *
+    * Implement hangman using `Dictionary.Dictionary` for the words,
+    * and the above helper functions.
+    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
 }
