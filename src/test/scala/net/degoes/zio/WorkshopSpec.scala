@@ -17,7 +17,7 @@ object WorkshopSpec
             output <- TestConsole.output
           } yield
             assert(value, equalTo(0)) &&
-              assert(output, equalTo(Vector("Hello World!")))
+              assert(output, equalTo(Vector("Hello World!\n")))
         } @@ ignore,
         suite("Board")(
           test("won horizontal first") {
