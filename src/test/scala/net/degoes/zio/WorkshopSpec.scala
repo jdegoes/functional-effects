@@ -1,9 +1,11 @@
 package net.degoes.zio
 
+import zio.ZIO
+import zio.duration._
 import zio.test._
 import zio.test.environment._
 import zio.test.Assertion._
-import zio.test.TestAspect.ignore
+import zio.test.TestAspect.{ignore, timeout}
 
 object WorkshopSpec
     extends DefaultRunnableSpec({
@@ -18,6 +20,26 @@ object WorkshopSpec
           } yield
             assert(value, equalTo(0)) &&
               assert(output, equalTo(Vector("Hello World!\n")))
+        },
+        testM("ErrorConversion") {
+          assertM(ErrorConversion.run(Nil), equalTo(1))
+        },
+        testM("PromptName") {
+          for {
+            _ <- TestConsole.feedLines("John")
+            code <- PromptName.run(Nil)
+            output <- TestConsole.output
+          } yield
+            assert(code, equalTo(0)) &&
+              assert(output.last, equalTo("Good to meet you, John!\n"))
+        },
+        testM("AlarmApp") {
+          for {
+            _ <- TestConsole.feedLines("lksjdflkj", "10")
+            fiber <- AlarmApp.run(Nil).fork
+            _ <- TestClock.adjust(10.seconds)
+            code <- fiber.join
+          } yield assert(code, equalTo(0))
         },
         suite("Board")(
           test("won horizontal first") {

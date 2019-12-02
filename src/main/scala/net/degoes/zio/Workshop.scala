@@ -208,13 +208,165 @@ object ComputePi extends App {
     ???
 }
 
+object StmSwap extends App {
+  import zio.console._
+  import zio.stm._
+
+  /**
+    * EXERCISE 13
+    *
+    * Demonstrate the following code does not reliably swap two values in the
+    * presence of concurrency.
+    */
+  def exampleRef = {
+    def swap[A](ref1: Ref[A], ref2: Ref[A]): UIO[Unit] =
+      for {
+        v1 <- ref1.get
+        v2 <- ref2.get
+        _ <- ref2.set(v1)
+        _ <- ref1.set(v2)
+      } yield ()
+
+    for {
+      ref1 <- Ref.make(100)
+      ref2 <- Ref.make(0)
+      fiber1 <- swap(ref1, ref2).repeat(Schedule.recurs(100)).fork
+      fiber2 <- swap(ref2, ref1).repeat(Schedule.recurs(100)).fork
+      _ <- (fiber1 zip fiber2).join
+      value <- (ref1.get zipWith ref2.get)(_ + _)
+    } yield value
+  }
+
+  /**
+    * EXERCISE 14
+    *
+    * Using `STM`, implement a safe version of the swap function.
+    */
+  def exampleStm = {
+    def swap[A](ref1: TRef[A], ref2: TRef[A]): UIO[Unit] = ???
+
+    for {
+      ref1 <- TRef.make(100).commit
+      ref2 <- TRef.make(0).commit
+      fiber1 <- swap(ref1, ref2).repeat(Schedule.recurs(100)).fork
+      fiber2 <- swap(ref2, ref1).repeat(Schedule.recurs(100)).fork
+      _ <- (fiber1 zip fiber2).join
+      value <- (ref1.get zipWith ref2.get)(_ + _).commit
+    } yield value
+  }
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    exampleRef.map(_.toString).flatMap(putStrLn).fold(_ => 1, _ => 0)
+}
+
+object StmLock extends App {
+  import zio.console._
+  import zio.stm._
+
+  /**
+    * EXERCISE 15
+    *
+    * Using STM, implement a simple binary lock by implementing the creation,
+    * acquisition, and release methods.
+    */
+  class Lock private (tref: TRef[Boolean]) {
+    def acquire: UIO[Unit] = ???
+    def release: UIO[Unit] = ???
+  }
+  object Lock {
+    def make: UIO[Lock] = ???
+  }
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    (for {
+      lock <- Lock.make
+      fiber1 <- lock.acquire
+        .bracket_(lock.release)(putStrLn("Bob  : I have the lock!"))
+        .repeat(Schedule.recurs(10))
+        .fork
+      fiber2 <- lock.acquire
+        .bracket_(lock.release)(putStrLn("Sarah: I have the lock!"))
+        .repeat(Schedule.recurs(10))
+        .fork
+      _ <- (fiber1 zip fiber2).join
+    } yield 0) orElse ZIO.succeed(1)
+}
+
+object StmLunchTime extends App {
+  import zio.console._
+  import zio.stm._
+
+  /**
+    * EXERCISE 16
+    *
+    * Using STM, implement the missing methods of Attendee.
+    */
+  final case class Attendee(state: TRef[Attendee.State]) {
+    import Attendee.State._
+
+    def isStarving: STM[Nothing, Boolean] = ???
+
+    def feed: STM[Nothing, Unit] = ???
+  }
+  object Attendee {
+    sealed trait State
+    object State {
+      case object Starving extends State
+      case object Full extends State
+    }
+  }
+
+  /**
+    * EXERCISE 17
+    *
+    * Using STM, implement the missing methods of Table.
+    */
+  final case class Table(seats: TArray[Boolean]) {
+    def findEmptySeat: STM[Nothing, Option[Int]] =
+      seats
+        .fold[(Int, Option[Int])]((0, None)) {
+          case ((index, z @ Some(_)), _) => (index + 1, z)
+          case ((index, None), taken) =>
+            (index + 1, if (taken) None else Some(index))
+        }
+        .map(_._2)
+
+    def takeSeat(index: Int): STM[Nothing, Unit] = ???
+    def vacateSeat(index: Int): STM[Nothing, Unit] = ???
+  }
+
+  /**
+    * EXERCISE 18
+    *
+    * Using STM, implement a method that feeds a single attendee.
+    */
+  def feedAttendee(t: Table, a: Attendee): STM[Nothing, Unit] =
+    ???
+
+  /**
+    * EXERCISE 19
+    *
+    * Using STM, implement a method that feeds only the starving attendees.
+    */
+  def feedStarving(table: Table, list: List[Attendee]): UIO[Unit] =
+    ???
+
+  /**
+    * EXERCISE 20
+    *
+    * Construct a table and starving attendees and feed them.
+    */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
 object Hangman extends App {
   import zio.console._
   import zio.random._
   import java.io.IOException
 
   /**
-    * EXERCISE 13
+    * EXERCISE 21
     *
     * Implement an effect that gets a single, lower-case character from
     * the user.
@@ -222,7 +374,7 @@ object Hangman extends App {
   lazy val getChoice: ZIO[Console, IOException, Char] = ???
 
   /**
-    * EXERCISE 14
+    * EXERCISE 22
     *
     * Implement an effect that prompts the user for their name, and
     * returns it.
@@ -230,14 +382,14 @@ object Hangman extends App {
   lazy val getName: ZIO[Console, IOException, String] = ???
 
   /**
-    * EXERCISE 15
+    * EXERCISE 23
     *
     * Implement an effect that chooses a random word from the dictionary.
     */
   lazy val chooseWord: ZIO[Random, Nothing, String] = ???
 
   /**
-    * EXERCISE 17
+    * EXERCISE 24
     *
     * Implement the main game loop, which gets choices from the user until
     * the game is won or lost.
@@ -295,7 +447,7 @@ object Hangman extends App {
     else GuessResult.Incorrect
 
   /**
-    * EXERCISE 18
+    * EXERCISE 25
     *
     * Implement hangman using `Dictionary.Dictionary` for the words,
     * and the above helper functions.
