@@ -1,6 +1,7 @@
 package net.degoes.zio
 
 import zio._
+import java.text.NumberFormat
 
 object HelloWorld extends App {
   import zio.console._
@@ -15,6 +16,8 @@ object HelloWorld extends App {
 }
 
 object PrintSequence extends App {
+  import zio.console._ 
+
   /**
    * EXERCISE 2
    * 
@@ -53,10 +56,11 @@ object Looping extends App {
    * 
    * Implement a `repeat` combinator using `flatMap` and recursion.
    */
-  def repeat[R, E, A](n: Int)(task: ZIO[R, E, A]): ZIO[R, E, A] = ???
+  def repeat[R, E, A](n: Int)(task: ZIO[R, E, A]): ZIO[R, E, A] = 
+    ???
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = 
-    repeat(100)(putStrLn("All work and no play makes Jack a dull boy")).fold(_ => 1, _ => 0)
+    repeat(100)(putStrLn("All work and no play makes Jack a dull boy")) as 0
 }
 
 object PromptName extends App {
@@ -175,7 +179,14 @@ object Cat extends App {
 object CatIncremental extends App {
   import zio.console._
   import zio.blocking._
-  import java.io._
+  import java.io.{ IOException, InputStream, FileInputStream }
+
+  /**
+   * BONUS EXERCISE
+   * 
+   * Implement a `blockingIO` combinator to use in subsequent exercises.
+   */
+  def blockingIO[A](a: => A): ZIO[Blocking, IOException, A] = ???
 
   /**
     * EXERCISE 12
@@ -184,15 +195,12 @@ object CatIncremental extends App {
     * the blocking thread pool.
     */
   final case class FileHandle private (private val is: InputStream) {
-    final def close: ZIO[Blocking, IOException, Unit] = 
-      ???
+    final def close: ZIO[Blocking, IOException, Unit] = ???
 
-    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] = 
-      ???
+    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] = ???
   }
   object FileHandle {
-    final def open(file: String): ZIO[Blocking, IOException, FileHandle] = 
-      ???
+    final def open(file: String): ZIO[Blocking, IOException, FileHandle] = ???
   }
 
   /**
@@ -210,9 +218,43 @@ object CatIncremental extends App {
     }
 }
 
+object AlarmAppImproved extends App {
+  import zio.console._
+  import zio.duration._
+  import java.io.IOException
+  import java.util.concurrent.TimeUnit
+
+  lazy val getAlarmDuration: ZIO[Console, IOException, Duration] = {
+    def parseDuration(input: String): IO[NumberFormatException, Duration] =
+      ZIO.effect(Duration((input.toDouble * 1000.0).toLong, TimeUnit.MILLISECONDS)).refineToOrDie[NumberFormatException]
+
+    val fallback = putStrLn("You didn't enter the number of seconds!") *> getAlarmDuration
+
+    for {
+      _        <- putStrLn("Please enter the number of seconds to sleep: ")
+      input    <- getStrLn
+      duration <- parseDuration(input) orElse fallback
+    } yield duration
+  }
+
+  /**
+    * EXERCISE 14
+    *
+    * Create a program that asks the user for a number of seconds to sleep,
+    * sleeps the specified number of seconds using ZIO.sleep(d), concurrently 
+    * prints a dot every second that the alarm is sleeping for, and then 
+    * prints out a wakeup alarm message, like "Time to wakeup!!!".
+    */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
 object ComputePi extends App {
   import zio.random._
   import zio.console._
+  import zio.clock._
+  import zio.duration._
+  import zio.stm._
 
   /**
     * Some state to keep track of all points inside a circle,
@@ -243,13 +285,12 @@ object ComputePi extends App {
     nextDouble zip nextDouble
 
   /**
-    * EXERCISE 14
+    * EXERCISE 15
     *
     * Build a multi-fiber program that estimates the value of `pi`. Print out
     * ongoing estimates continuously until the estimation is complete.
     */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ???
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = ???
 }
 
 object StmSwap extends App {
@@ -257,7 +298,7 @@ object StmSwap extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 15
+    * EXERCISE 16
     *
     * Demonstrate the following code does not reliably swap two values in the
     * presence of concurrency.
@@ -282,7 +323,7 @@ object StmSwap extends App {
   }
 
   /**
-    * EXERCISE 16
+    * EXERCISE 17
     *
     * Using `STM`, implement a safe version of the swap function.
     */
@@ -300,7 +341,7 @@ object StmSwap extends App {
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    exampleRef.map(_.toString).flatMap(putStrLn).fold(_ => 1, _ => 0)
+    exampleRef.map(_.toString).flatMap(putStrLn) as 0
 }
 
 object StmLock extends App {
@@ -308,7 +349,7 @@ object StmLock extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 17
+    * EXERCISE 18
     *
     * Using STM, implement a simple binary lock by implementing the creation,
     * acquisition, and release methods.
@@ -333,7 +374,7 @@ object StmLock extends App {
         .repeat(Schedule.recurs(10))
         .fork
       _ <- (fiber1 zip fiber2).join
-    } yield 0) orElse ZIO.succeed(1)
+    } yield 0) as 1
 }
 
 object StmLunchTime extends App {
@@ -341,7 +382,7 @@ object StmLunchTime extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 18
+    * EXERCISE 19
     *
     * Using STM, implement the missing methods of Attendee.
     */
@@ -361,7 +402,7 @@ object StmLunchTime extends App {
   }
 
   /**
-    * EXERCISE 19
+    * EXERCISE 20
     *
     * Using STM, implement the missing methods of Table.
     */
@@ -380,7 +421,7 @@ object StmLunchTime extends App {
   }
 
   /**
-    * EXERCISE 20
+    * EXERCISE 21
     *
     * Using STM, implement a method that feeds a single attendee.
     */
@@ -388,7 +429,7 @@ object StmLunchTime extends App {
     ???
 
   /**
-    * EXERCISE 21
+    * EXERCISE 22
     *
     * Using STM, implement a method that feeds only the starving attendees.
     */
@@ -396,12 +437,41 @@ object StmLunchTime extends App {
     ???
 
   /**
-    * EXERCISE 22
+    * EXERCISE 23
     *
     * Construct a table and starving attendees and feed them.
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
+}
+
+object StmPriorityQueue extends App {
+  import zio.console._
+  import zio.stm._
+
+  /**
+   * EXERCISE 24
+   * 
+   * Using STM, design a priority queue.
+   */
+  class PriorityQueue[A] private (minLevel: TRef[Int], maxLevel: TRef[Int], map: TMap[Int, TQueue[A]]) {
+    def offer(a: A, priority: Int): UIO[Unit] = ???
+
+    def take: UIO[A] = ???
+  }
+  object PriorityQueue {
+    def make[A]: UIO[PriorityQueue[A]] = ???
+  }
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    (for {
+      _           <- putStrLn("Enter any key to exit...")
+      queue       <- PriorityQueue.make[String]
+      lowPriority  = ZIO.foreach(0 to 100)(i => queue.offer(i.toString, 3))
+      highPriority = ZIO.foreach(0 to 100)(i => queue.offer(i.toString, 0))
+      _           <- ZIO.forkAll(List(lowPriority, highPriority)) *> queue.take.flatMap(putStrLn(_)).forever.fork *>
+                      getStrLn 
+    } yield 0).fold(_ => 1, _ => 0)
 }
 
 object Hangman extends App {
