@@ -474,6 +474,19 @@ object StmPriorityQueue extends App {
     } yield 0).fold(_ => 1, _ => 0)
 }
 
+
+object Sharding extends App {
+  /**
+   * Create N workers reading from a Queue, if one of them fails, 
+   * then wait for the other ones to process the current item, but 
+   * terminate all the workers.
+   */
+  def shard[R, E, A](queue: Queue[A], n: Int, worker: A => ZIO[R, E, Unit]): ZIO[R, E, Nothing] = 
+    ???
+
+  def run(args: List[String]) = ???
+}
+
 object Hangman extends App {
   import zio.console._
   import zio.random._
