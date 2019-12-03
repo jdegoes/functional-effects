@@ -11,7 +11,18 @@ object HelloWorld extends App {
     * Implement a simple "Hello World" program using the effect returned by `putStrLn`.
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ZIO.succeed(0)
+    ???
+}
+
+object PrintSequence extends App {
+  /**
+   * EXERCISE 2
+   * 
+   * Using `*>` (`zipRight`), compose a sequence of `putStrLn` effects to 
+   * produce an effect that prints three lines of text to the console.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = 
+    ???
 }
 
 object ErrorConversion extends App {
@@ -25,12 +36,27 @@ object ErrorConversion extends App {
       putStrLn("This will NEVER be printed!")
 
   /**
-    * EXERCISE 2
+    * EXERCISE 3
     *
     * Using `ZIO#orElse` or `ZIO#fold`, have the `run` function compose the
     * preceding `failed` effect into the effect that `run` returns.
     */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = ???
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = 
+    ???
+}
+
+object Looping extends App {
+  import zio.console._
+
+  /**
+   * EXERCISE 4
+   * 
+   * Implement a `repeat` combinator using `flatMap` and recursion.
+   */
+  def repeat[R, E, A](n: Int)(task: ZIO[R, E, A]): ZIO[R, E, A] = ???
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = 
+    repeat(100)(putStrLn("All work and no play makes Jack a dull boy")).fold(_ => 1, _ => 0)
 }
 
 object PromptName extends App {
@@ -39,19 +65,20 @@ object PromptName extends App {
   import zio.console._
 
   /**
-    * EXERCISE 3
+    * EXERCISE 5
     *
-    * Implement a simple program that asks the user for their name (using
-    * `getStrLn`), and then prints it out to the user (using `putStrLn`).
+    * Using `ZIO#flatMap`, implement a simple program that asks the user for 
+    * their name (using `getStrLn`), and then prints it out to the user (using `putStrLn`).
     */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = ???
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = 
+    ???
 }
 
 object ZIOTypes {
   type ??? = Nothing
 
   /**
-    * EXERCISE 4
+    * EXERCISE 6
     *
     * Provide definitions for the ZIO type aliases below.
     */
@@ -71,7 +98,7 @@ object NumberGuesser extends App {
     else putStrLn(s"You did not guess correctly. The answer was ${random}")
 
   /**
-    * EXERCISE 5
+    * EXERCISE 7
     *
     * Choose a random number (using `nextInt`), and then ask the user to guess
     * the number, feeding their response to `analyzeAnswer`, above.
@@ -84,12 +111,14 @@ object AlarmApp extends App {
   import zio.console._
   import zio.duration._
   import java.io.IOException
+  import java.util.concurrent.TimeUnit
 
   /**
-    * EXERCISE 6
+    * EXERCISE 8
     *
     * Create an effect that will get a `Duration` from the user, by prompting
-    * the user to enter a decimal number of seconds.
+    * the user to enter a decimal number of seconds. Use `refineOrDie` to 
+    * narrow the error type as necessary.
     */
   lazy val getAlarmDuration: ZIO[Console, IOException, Duration] = {
     def parseDuration(input: String): IO[NumberFormatException, Duration] =
@@ -98,15 +127,19 @@ object AlarmApp extends App {
     def fallback(input: String): ZIO[Console, IOException, Duration] =
       ???
 
-    ???
+    for {
+      _        <- putStrLn("Please enter the number of seconds to sleep: ")
+      input    <- getStrLn
+      duration <- parseDuration(input) orElse fallback(input)
+    } yield duration
   }
 
   /**
-    * EXERCISE 7
+    * EXERCISE 9
     *
     * Create a program that asks the user for a number of seconds to sleep,
-    * sleeps the specified number of seconds, and then prints out a wakeup
-    * alarm message.
+    * sleeps the specified number of seconds using ZIO.sleep(d), and then 
+    * prints out a wakeup alarm message, like "Time to wakeup!!!".
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
@@ -118,21 +151,25 @@ object Cat extends App {
   import java.io.IOException
 
   /**
-    * EXERCISE 8
+    * EXERCISE 10
     *
     * Implement a function to read a file on the blocking thread pool, storing
     * the result into a string.
     */
-  def readFile(file: String): ZIO[Blocking, IOException, String] = ???
+  def readFile(file: String): ZIO[Blocking, IOException, String] = 
+    ???
 
   /**
-    * EXERCISE 9
+    * EXERCISE 11
     *
     * Implement a version of the command-line utility "cat", which dumps the
     * contents of the specified file to standard output.
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ???
+    args match {
+      case file :: Nil => ???
+      case _ => putStrLn("Usage: cat <file>") as 2
+    }
 }
 
 object CatIncremental extends App {
@@ -141,29 +178,36 @@ object CatIncremental extends App {
   import java.io._
 
   /**
-    * EXERCISE 10
+    * EXERCISE 12
     *
     * Implement all missing methods of `FileHandle`. Be sure to do all work on
     * the blocking thread pool.
     */
   final case class FileHandle private (private val is: InputStream) {
-    final def close: ZIO[Blocking, IOException, Unit] = ???
+    final def close: ZIO[Blocking, IOException, Unit] = 
+      ???
 
-    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] = ???
+    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] = 
+      ???
   }
   object FileHandle {
-    final def open(file: String): ZIO[Blocking, IOException, FileHandle] = ???
+    final def open(file: String): ZIO[Blocking, IOException, FileHandle] = 
+      ???
   }
 
   /**
-    * EXERCISE 11
+    * EXERCISE 13
     *
     * Implement an incremental version of the `cat` utility, using `ZIO#bracket`
     * or `ZManaged` to ensure the file is closed in the event of error or
     * interruption.
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ???
+    args match {
+      case file :: Nil => ???
+
+      case _ => putStrLn("Usage: cat <file>") as 2
+    }
 }
 
 object ComputePi extends App {
@@ -199,7 +243,7 @@ object ComputePi extends App {
     nextDouble zip nextDouble
 
   /**
-    * EXERCISE 12
+    * EXERCISE 14
     *
     * Build a multi-fiber program that estimates the value of `pi`. Print out
     * ongoing estimates continuously until the estimation is complete.
@@ -213,7 +257,7 @@ object StmSwap extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 13
+    * EXERCISE 15
     *
     * Demonstrate the following code does not reliably swap two values in the
     * presence of concurrency.
@@ -238,7 +282,7 @@ object StmSwap extends App {
   }
 
   /**
-    * EXERCISE 14
+    * EXERCISE 16
     *
     * Using `STM`, implement a safe version of the swap function.
     */
@@ -264,7 +308,7 @@ object StmLock extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 15
+    * EXERCISE 17
     *
     * Using STM, implement a simple binary lock by implementing the creation,
     * acquisition, and release methods.
@@ -297,7 +341,7 @@ object StmLunchTime extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 16
+    * EXERCISE 18
     *
     * Using STM, implement the missing methods of Attendee.
     */
@@ -317,7 +361,7 @@ object StmLunchTime extends App {
   }
 
   /**
-    * EXERCISE 17
+    * EXERCISE 19
     *
     * Using STM, implement the missing methods of Table.
     */
@@ -336,7 +380,7 @@ object StmLunchTime extends App {
   }
 
   /**
-    * EXERCISE 18
+    * EXERCISE 20
     *
     * Using STM, implement a method that feeds a single attendee.
     */
@@ -344,7 +388,7 @@ object StmLunchTime extends App {
     ???
 
   /**
-    * EXERCISE 19
+    * EXERCISE 21
     *
     * Using STM, implement a method that feeds only the starving attendees.
     */
@@ -352,7 +396,7 @@ object StmLunchTime extends App {
     ???
 
   /**
-    * EXERCISE 20
+    * EXERCISE 22
     *
     * Construct a table and starving attendees and feed them.
     */
@@ -366,7 +410,7 @@ object Hangman extends App {
   import java.io.IOException
 
   /**
-    * EXERCISE 21
+    * EXERCISE 23
     *
     * Implement an effect that gets a single, lower-case character from
     * the user.
@@ -374,7 +418,7 @@ object Hangman extends App {
   lazy val getChoice: ZIO[Console, IOException, Char] = ???
 
   /**
-    * EXERCISE 22
+    * EXERCISE 24
     *
     * Implement an effect that prompts the user for their name, and
     * returns it.
@@ -382,14 +426,14 @@ object Hangman extends App {
   lazy val getName: ZIO[Console, IOException, String] = ???
 
   /**
-    * EXERCISE 23
+    * EXERCISE 25
     *
     * Implement an effect that chooses a random word from the dictionary.
     */
   lazy val chooseWord: ZIO[Random, Nothing, String] = ???
 
   /**
-    * EXERCISE 24
+    * EXERCISE 26
     *
     * Implement the main game loop, which gets choices from the user until
     * the game is won or lost.
@@ -447,7 +491,7 @@ object Hangman extends App {
     else GuessResult.Incorrect
 
   /**
-    * EXERCISE 25
+    * EXERCISE 27
     *
     * Implement hangman using `Dictionary.Dictionary` for the words,
     * and the above helper functions.
