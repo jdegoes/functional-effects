@@ -480,7 +480,7 @@ object Hangman extends App {
   import java.io.IOException
 
   /**
-    * EXERCISE 23
+    * EXERCISE 25
     *
     * Implement an effect that gets a single, lower-case character from
     * the user.
@@ -488,7 +488,7 @@ object Hangman extends App {
   lazy val getChoice: ZIO[Console, IOException, Char] = ???
 
   /**
-    * EXERCISE 24
+    * EXERCISE 26
     *
     * Implement an effect that prompts the user for their name, and
     * returns it.
@@ -496,14 +496,14 @@ object Hangman extends App {
   lazy val getName: ZIO[Console, IOException, String] = ???
 
   /**
-    * EXERCISE 25
+    * EXERCISE 27
     *
     * Implement an effect that chooses a random word from the dictionary.
     */
   lazy val chooseWord: ZIO[Random, Nothing, String] = ???
 
   /**
-    * EXERCISE 26
+    * EXERCISE 28
     *
     * Implement the main game loop, which gets choices from the user until
     * the game is won or lost.
@@ -561,7 +561,7 @@ object Hangman extends App {
     else GuessResult.Incorrect
 
   /**
-    * EXERCISE 27
+    * EXERCISE 29
     *
     * Implement hangman using `Dictionary.Dictionary` for the words,
     * and the above helper functions.
