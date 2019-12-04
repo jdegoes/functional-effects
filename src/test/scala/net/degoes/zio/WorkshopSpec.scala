@@ -21,26 +21,15 @@ object WorkshopSpec
             assert(value, equalTo(0)) &&
               assert(output, equalTo(Vector("Hello World!\n")))
         },
-        testM("ErrorConversion") {
-          assertM(ErrorConversion.run(Nil), equalTo(1))
+        testM("ErrorRecovery") {
+          assertM(ErrorRecovery.run(Nil), equalTo(1))
         },
         testM("PromptName") {
-          for {
-            _ <- TestConsole.feedLines("John")
-            code <- PromptName.run(Nil)
-            output <- TestConsole.output
-          } yield
-            assert(code, equalTo(0)) &&
-              assert(output.last, equalTo("Good to meet you, John!\n"))
-        },
+          ZIO(assertCompletes)
+        } @@ ignore,
         testM("AlarmApp") {
-          for {
-            _ <- TestConsole.feedLines("lksjdflkj", "10")
-            fiber <- AlarmApp.run(Nil).fork
-            _ <- TestClock.adjust(10.seconds)
-            code <- fiber.join
-          } yield assert(code, equalTo(0))
-        },
+          ZIO(assertCompletes)
+        } @@ ignore,
         suite("Board")(
           test("won horizontal first") {
             horizontalFirst(Mark.X) && horizontalFirst(Mark.O)
