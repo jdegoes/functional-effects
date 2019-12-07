@@ -24,7 +24,7 @@ object HelloWorld extends App {
   /**
     * EXERCISE 2
     *
-    * Implement a simple "Hello World" program using the effect returned by `putStrLn`.
+    * Implement a simple "Hello World!" program using the effect returned by `putStrLn`.
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
@@ -105,7 +105,7 @@ object ErrorNarrowing extends App {
     * Using `ZIO#refineToOrDie`, narrow the error type of the following
     * effect to IOException.
     */
-  val myReadLine: IO[IOException, String] = ZIO.effect(readLine()) ?
+  val myReadLine: IO[IOException, String] = ??? // ZIO.effect(readLine())
 
   def myPrintLn(line: String): UIO[Unit] = UIO(println(line))
 
