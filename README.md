@@ -17,12 +17,12 @@ An introduction to ZIO using Game Programming!
 2. Clone the repository.
 
     ```bash
-    git clone git@github.com:jdegoes/zio-intro-game.git
+    git clone https@github.com:jdegoes/zio-intro-game.git
     ```
 5. Launch `sbt`.
 
     ```bash
-    ./sbt
+    cd zio-intro-game; sbt
     ```
 6. Enter continuous compilation mode.
 
