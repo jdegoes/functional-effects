@@ -19,7 +19,7 @@ An introduction to ZIO using Game Programming!
     ```bash
     git clone https://github.com/jdegoes/zio-intro-game
     ```
-5. Launch `sbt`.
+5. Launch project provided `sbt`.
 
     ```bash
     cd zio-intro-game; ./sbt
