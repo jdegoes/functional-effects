@@ -22,7 +22,7 @@ An introduction to ZIO using Game Programming!
 5. Launch `sbt`.
 
     ```bash
-    cd zio-intro-game; sbt
+    cd zio-intro-game; ./sbt
     ```
 6. Enter continuous compilation mode.
 
