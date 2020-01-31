@@ -253,22 +253,15 @@ object SourceManaged extends App {
     * the result into a string.
     */
   def readFiles(files: List[String]): ZIO[Blocking with Console, IOException, Unit] =
-    ZManaged.foreachPar(files) { file => 
-      ZioSource.make(file)
-    }.use { sources => 
-      ZIO.foreachPar(sources) { source =>
-        for {
-          string <- source.execute(_.mkString)
-          _      <- putStrLn(string)
-        } yield ()
-      }
-    }.unit
+    ???
 
   /**
     * EXERCISE
     *
-    * Implement a version of the command-line utility "cat", which dumps the
-    * contents of the specified file to standard output.
+    * Implement a function that prints out all files specified on the 
+    * command-line. Only print out contents from these files if they 
+    * can all be opened simultaneously. Otherwise, don't print out 
+    * anything except an error message.
     */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
