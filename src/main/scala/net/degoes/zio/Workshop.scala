@@ -8,7 +8,7 @@ object ZIOTypes {
   type ??? = Nothing
 
   /**
-    * EXERCISE 1
+    * EXERCISE
     *
     * Provide definitions for the ZIO type aliases below.
     */
@@ -23,7 +23,7 @@ object HelloWorld extends App {
   import zio.console._
 
   /**
-    * EXERCISE 2
+    * EXERCISE
     *
     * Implement a simple "Hello World!" program using the effect returned by `putStrLn`.
     */
@@ -35,7 +35,7 @@ object PrintSequence extends App {
   import zio.console._
 
   /**
-    * EXERCISE 3
+    * EXERCISE
     *
     * Using `*>` (`zipRight`), compose a sequence of `putStrLn` effects to
     * produce an effect that prints three lines of text to the console.
@@ -55,7 +55,7 @@ object ErrorRecovery extends App {
       putStrLn("This will NEVER be printed!")
 
   /**
-    * EXERCISE 4
+    * EXERCISE
     *
     * Using `ZIO#orElse` or `ZIO#fold`, have the `run` function compose the
     * preceding `failed` effect into the effect that `run` returns.
@@ -68,7 +68,7 @@ object Looping extends App {
   import zio.console._
 
   /**
-    * EXERCISE 5
+    * EXERCISE
     *
     * Implement a `repeat` combinator using `flatMap` and recursion.
     */
@@ -82,7 +82,7 @@ object Looping extends App {
 object EffectConversion extends App {
 
   /**
-    * EXERCISE 6
+    * EXERCISE
     *
     * Using ZIO.effect, convert the side-effecting of `println` into a pure
     * functional effect.
@@ -101,7 +101,7 @@ object ErrorNarrowing extends App {
   }
 
   /**
-    * EXERCISE 7
+    * EXERCISE
     *
     * Using `ZIO#refineToOrDie`, narrow the error type of the following
     * effect to IOException.
@@ -124,7 +124,7 @@ object PromptName extends App {
   import zio.console._
 
   /**
-    * EXERCISE 8
+    * EXERCISE
     *
     * Using `ZIO#flatMap`, implement a simple program that asks the user for
     * their name (using `getStrLn`), and then prints it out to the user (using `putStrLn`).
@@ -142,7 +142,7 @@ object NumberGuesser extends App {
     else putStrLn(s"You did not guess correctly. The answer was ${random}")
 
   /**
-    * EXERCISE 9
+    * EXERCISE
     *
     * Choose a random number (using `nextInt`), and then ask the user to guess
     * the number, feeding their response to `analyzeAnswer`, above.
@@ -158,7 +158,7 @@ object AlarmApp extends App {
   import java.util.concurrent.TimeUnit
 
   /**
-    * EXERCISE 10
+    * EXERCISE
     *
     * Create an effect that will get a `Duration` from the user, by prompting
     * the user to enter a decimal number of seconds. Use `refineOrDie` to
@@ -179,7 +179,7 @@ object AlarmApp extends App {
   }
 
   /**
-    * EXERCISE 11
+    * EXERCISE
     *
     * Create a program that asks the user for a number of seconds to sleep,
     * sleeps the specified number of seconds using ZIO.sleep(d), and then
@@ -195,7 +195,7 @@ object Cat extends App {
   import java.io.IOException
 
   /**
-    * EXERCISE 12
+    * EXERCISE
     *
     * Implement a function to read a file on the blocking thread pool, storing
     * the result into a string.
@@ -204,7 +204,68 @@ object Cat extends App {
     ???
 
   /**
-    * EXERCISE 13
+    * EXERCISE
+    *
+    * Implement a version of the command-line utility "cat", which dumps the
+    * contents of the specified file to standard output.
+    */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
+
+object SourceManaged extends App {
+  import zio.console._
+  import zio.blocking._
+  import zio.duration._
+  import java.io.IOException
+
+  import scala.io.Source
+
+  final class ZioSource private (private val source: Source) {
+    def execute[T](f: Source => T): ZIO[Blocking, IOException, T] = 
+      effectBlocking(f(source)).refineToOrDie[IOException]
+  }
+  object ZioSource {
+    /**
+     * EXERCISE
+     * 
+     * Use the `ZManaged.make` constructor to make a managed data type that 
+     * will automatically acquire and release the resource when it is used.
+     */
+    def make(file: String): ZManaged[Blocking, IOException, ZioSource] = {
+      // An effect that acquires the resource:
+      val open = effectBlocking(new ZioSource(Source.fromFile(file))).refineToOrDie[IOException]
+
+      // A function that, when given the resource, returns an effect that 
+      // releases the resource:
+      val close: ZioSource => ZIO[Blocking, Nothing, Unit] = 
+        _.execute(_.close()).orDie
+
+      ???
+    }
+  }
+  
+  /**
+    * EXERCISE
+    *
+    * Implement a function to read a file on the blocking thread pool, storing
+    * the result into a string.
+    */
+  def readFiles(files: List[String]): ZIO[Blocking with Console, IOException, Unit] =
+    ZManaged.foreachPar(files) { file => 
+      ZioSource.make(file)
+    }.use { sources => 
+      ZIO.foreachPar(sources) { source =>
+        for {
+          string <- source.execute(_.mkString)
+          _      <- putStrLn(string)
+        } yield ()
+      }
+    }.unit
+
+  /**
+    * EXERCISE
     *
     * Implement a version of the command-line utility "cat", which dumps the
     * contents of the specified file to standard output.
@@ -227,7 +288,7 @@ object CatIncremental extends App {
     ???
 
   /**
-    * EXERCISE 14
+    * EXERCISE
     *
     * Implement all missing methods of `FileHandle`. Be sure to do all work on
     * the blocking thread pool.
@@ -247,7 +308,7 @@ object CatIncremental extends App {
     ???
 
   /**
-    * EXERCISE 15
+    * EXERCISE
     *
     * Implement an incremental version of the `cat` utility, using `ZIO#bracket`
     * or `ZManaged` to ensure the file is closed in the event of error or
@@ -287,7 +348,7 @@ object AlarmAppImproved extends App {
   }
 
   /**
-    * EXERCISE 16
+    * EXERCISE
     *
     * Create a program that asks the user for a number of seconds to sleep,
     * sleeps the specified number of seconds using ZIO.sleep(d), concurrently
@@ -334,7 +395,7 @@ object ComputePi extends App {
     nextDouble zip nextDouble
 
   /**
-    * EXERCISE 17
+    * EXERCISE
     *
     * Build a multi-fiber program that estimates the value of `pi`. Print out
     * ongoing estimates continuously until the estimation is complete.
@@ -348,7 +409,7 @@ object StmSwap extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 18
+    * EXERCISE
     *
     * Demonstrate the following code does not reliably swap two values in the
     * presence of concurrency.
@@ -373,7 +434,7 @@ object StmSwap extends App {
   }
 
   /**
-    * EXERCISE 19
+    * EXERCISE
     *
     * Using `STM`, implement a safe version of the swap function.
     */
@@ -400,7 +461,7 @@ object StmLock extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 20
+    * EXERCISE
     *
     * Using STM, implement a simple binary lock by implementing the creation,
     * acquisition, and release methods.
@@ -434,7 +495,7 @@ object StmQueue extends App {
   import scala.collection.immutable.{ Queue => ScalaQueue }
 
   /**
-    * EXERCISE 21
+    * EXERCISE
     *
     * Using STM, implement a async queue with double back-pressuring.
     */
@@ -459,7 +520,7 @@ object StmLunchTime extends App {
   import zio.stm._
 
   /**
-    * EXERCISE 22
+    * EXERCISE
     *
     * Using STM, implement the missing methods of Attendee.
     */
@@ -479,7 +540,7 @@ object StmLunchTime extends App {
   }
 
   /**
-    * EXERCISE 23
+    * EXERCISE
     *
     * Using STM, implement the missing methods of Table.
     */
@@ -499,7 +560,7 @@ object StmLunchTime extends App {
   }
 
   /**
-    * EXERCISE 24
+    * EXERCISE
     *
     * Using STM, implement a method that feeds a single attendee.
     */
@@ -510,7 +571,7 @@ object StmLunchTime extends App {
     } yield ()
 
   /**
-    * EXERCISE 25
+    * EXERCISE
     *
     * Using STM, implement a method that feeds only the starving attendees.
     */
@@ -544,7 +605,7 @@ object StmPriorityQueue extends App {
   import zio.duration._
 
   /**
-    * EXERCISE 26
+    * EXERCISE
     *
     * Using STM, design a priority queue, where smaller integers are assumed
     * to have higher priority than greater integers.
@@ -621,7 +682,7 @@ object StmReentrantLock extends App {
   }
 
   /**
-    * EXERCISE 27
+    * EXERCISE
     *
     * Using STM, implement a reentrant read/write lock.
     */
@@ -752,7 +813,7 @@ object SimpleActor extends App {
 object Sharding extends App {
 
   /**
-    * EXERCISE 28
+    * EXERCISE
     *
     * Create N workers reading from a Queue, if one of them fails, then wait
     * for the other ones to process their current item, but terminate all the
@@ -820,7 +881,7 @@ object Hangman extends App {
   import java.io.IOException
 
   /**
-    * EXERCISE 29
+    * EXERCISE
     *
     * Implement an effect that gets a single, lower-case character from
     * the user.
@@ -828,7 +889,7 @@ object Hangman extends App {
   lazy val getChoice: ZIO[Console, IOException, Char] = ???
 
   /**
-    * EXERCISE 30
+    * EXERCISE
     *
     * Implement an effect that prompts the user for their name, and
     * returns it.
@@ -836,7 +897,7 @@ object Hangman extends App {
   lazy val getName: ZIO[Console, IOException, String] = ???
 
   /**
-    * EXERCISE 30
+    * EXERCISE
     *
     * Implement an effect that chooses a random word from the dictionary.
     * The dictionary is `Dictionary.Dictionary`.
@@ -844,7 +905,7 @@ object Hangman extends App {
   lazy val chooseWord: ZIO[Random, Nothing, String] = ???
 
   /**
-    * EXERCISE 31
+    * EXERCISE
     *
     * Implement the main game loop, which gets choices from the user until
     * the game is won or lost.
@@ -902,7 +963,7 @@ object Hangman extends App {
     else GuessResult.Incorrect
 
   /**
-    * EXERCISE 32
+    * EXERCISE
     *
     * Implement hangman using `Dictionary.Dictionary` for the words,
     * and the above helper functions.
