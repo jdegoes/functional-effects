@@ -54,6 +54,9 @@ object WorkshopSpec
           },
           test("won diagonal second") {
             diagonalSecond(Mark.X) && diagonalSecond(Mark.O)
+          },
+          test("won diagonal special") {
+            diagonalSpecial
           }
         )
       )
@@ -179,6 +182,19 @@ object BoardHelpers {
         )
         .flatMap(_.won),
       isSome(equalTo(mark))
+    )
+  }
+
+  def diagonalSpecial = {
+    assert(
+      Board
+        .fromChars(
+          List('o', 'x', 'x'),
+          List('o', 'x', 'o'),
+          List('x', 'o', 'x')
+        )
+        .flatMap(_.won),
+      isSome(equalTo(Mark.X))
     )
   }
 }
