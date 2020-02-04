@@ -5,7 +5,7 @@ lazy val root = project
   .settings(
     name := "zio-intro-game",
     organization := "net.degoes",
-    scalaVersion := "2.12.8",
+    scalaVersion := "2.12.10",
     initialCommands in Compile in console :=
       """|import zio._
          |import zio.console._
