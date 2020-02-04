@@ -509,6 +509,7 @@ object StmQueue extends App {
 }
 
 object StmLunchTime extends App {
+  import zio.duration._
   import zio.console._
   import zio.stm._
 
@@ -556,12 +557,22 @@ object StmLunchTime extends App {
     * EXERCISE
     *
     * Using STM, implement a method that feeds a single attendee.
+    * Note: Attendees take some time to eat their food before vacating their seat
     */
-  def feedAttendee(t: Table, a: Attendee): STM[Nothing, Unit] =
-    for {
+  def feedAttendee(t: Table, a: Attendee): ZIO[ZEnv, Nothing, Unit] = {
+    val findAndTakeSeat = for {
       index <- t.findEmptySeat.collect { case Some(index) => index }
-      _ <- t.takeSeat(index) *> a.feed *> t.vacateSeat(index)
+      _ <- t.takeSeat(index)
+    } yield index
+
+    for {
+      seat <- (findAndTakeSeat <* a.feed).commit
+      timeToEat <- random.nextInt(5) // take upto 5 seconds to eat
+      _ <- putStrLn(s"Attendee $a is chowing down")
+      _ <- ZIO.sleep(timeToEat.seconds)
+      _ <- t.vacateSeat(seat).commit
     } yield ()
+  }
 
   /**
     * EXERCISE
