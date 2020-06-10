@@ -215,7 +215,7 @@ object FlatMap extends App {
       ZIO.succeed(0)
 }
 
-object ManyFlatMaps extends App {
+object PromptName extends App {
   import zio.console._
 
   val readLine = getStrLn.orDie
@@ -287,6 +287,24 @@ object ForComprehensionBackward extends App {
     } yield 1
 }
 
+object NumberGuesser extends App {
+  import zio.console._
+  import zio.random._
+
+  def analyzeAnswer(random: Int, guess: String) =
+    if (random.toString == guess.trim) putStrLn("You guessed correctly!")
+    else putStrLn(s"You did not guess correctly. The answer was ${random}")
+
+  /**
+   * EXERCISE
+   *
+   * Choose a random number (using `nextInt`), and then ask the user to guess
+   * the number, feeding their response to `analyzeAnswer`, above.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
 object SuccessEffects extends App {
   import zio.console._
 
@@ -298,4 +316,43 @@ object SuccessEffects extends App {
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
+}
+
+object SingleSideEffect extends App {
+
+  /**
+   * EXERCISE
+   *
+   * Using ZIO.effect, convert the side-effecting of `println` into a pure
+   * functional effect.
+   */
+  def myPrintLn(line: String): Task[Unit] = UIO(println(line))
+
+  def run(args: List[String]) =
+    ???
+}
+
+object MultipleSideEffects extends App {
+
+  /**
+   * Using `ZIO.effect`, wrap Scala's `println` method to lazily convert it
+   * into a functional effect, which describes the action of printing a line
+   * of text to the console, but which does not actually perform the print.
+   */
+  def putStrLn(line: String): Task[String] = ???
+
+  /**
+   * Using `ZIO.effect`, wrap Scala's `scala.io.StdIn.readLine()` method to
+   * lazily convert it into a functional effect, which describes the action
+   * of printing a line of text to the console, but which does not actually
+   * perform the print.
+   */
+  val getStrLn: Task[String] = ???
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    (for {
+      _    <- putStrLn("Hello, what is your name?")
+      name <- getStrLn
+      _    <- putStrLn(s"Good to meet you, ${name}!")
+    } yield 0) orElse ZIO.succeed(1)
 }

@@ -2,6 +2,22 @@ package net.degoes.zio
 
 import zio._
 
+/*
+ * INTRODUCTION
+ *
+ * ZIO effects model failure, in a way similar to the Scala data types `Try`
+ * and `Either`. Unlike exceptions, ZIO effects are statically-typed, allowing
+ * you to determine if and how effects fail by looking at type signatures.
+ *
+ * ZIO effects have a large number of error-related operators to transform
+ * and combine effects. Some of these "catch" errors, while others transform
+ * them, and still others combine potentially failing effects with fallback
+ * effects.
+ *
+ * In this section, you will learn about all these operators, as well as the
+ * rich underlying model of errors that ZIO uses internally.
+ */
+
 object ErrorConstructor extends App {
   import zio.console._
 
@@ -125,4 +141,31 @@ object ErrorRecoveryIgnore extends App {
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
+}
+
+object ErrorNarrowing extends App {
+  import java.io.IOException
+  import scala.io.StdIn.readLine
+  implicit class Unimplemented[A](v: A) {
+    def ? = ???
+  }
+
+  val broadReadLine: IO[Throwable, String] = ZIO.effect(scala.io.StdIn.readLine())
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#refineToOrDie`, narrow the error type of `broadReadLine` into
+   * an `IOException`:
+   */
+  val myReadLine: IO[IOException, String] = broadReadLine ?
+
+  def myPrintLn(line: String): UIO[Unit] = UIO(println(line))
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    (for {
+      _    <- myPrintLn("What is your name?")
+      name <- myReadLine
+      _    <- myPrintLn(s"Good to meet you, ${name}")
+    } yield 0) orElse ZIO.succeed(1)
 }
