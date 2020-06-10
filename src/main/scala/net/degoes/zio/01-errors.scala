@@ -169,3 +169,41 @@ object ErrorNarrowing extends App {
       _    <- myPrintLn(s"Good to meet you, ${name}")
     } yield 0) orElse ZIO.succeed(1)
 }
+
+object AlarmApp extends App {
+  import zio.console._
+  import zio.duration._
+  import java.io.IOException
+  import java.util.concurrent.TimeUnit
+
+  /**
+   * EXERCISE
+   *
+   * Create an effect that will get a `Duration` from the user, by prompting
+   * the user to enter a decimal number of seconds. Use `refineToOrDie` to
+   * narrow the error type as necessary.
+   */
+  lazy val getAlarmDuration: ZIO[Console, IOException, Duration] = {
+    def parseDuration(input: String): IO[NumberFormatException, Duration] =
+      ???
+
+    def fallback(input: String): ZIO[Console, IOException, Duration] =
+      ???
+
+    for {
+      _        <- putStrLn("Please enter the number of seconds to sleep: ")
+      input    <- getStrLn
+      duration <- parseDuration(input) orElse fallback(input)
+    } yield duration
+  }
+
+  /**
+   * EXERCISE
+   *
+   * Create a program that asks the user for a number of seconds to sleep,
+   * sleeps the specified number of seconds using ZIO.sleep(d), and then
+   * prints out a wakeup alarm message, like "Time to wakeup!!!".
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
