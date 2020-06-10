@@ -36,12 +36,5 @@ object Interview extends App {
    * Print out the answers when done.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ZIO
-      .foreach(questions) { question =>
-        putStrLn(question) *> getStrLn
-      }
-      .flatMap { list =>
-        putStrLn("Your answers: \n" + list.mkString("\n"))
-      }
-      .fold(_ => 1, _ => 0)
+    ???
 }
