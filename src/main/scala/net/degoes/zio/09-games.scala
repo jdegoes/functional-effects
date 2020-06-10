@@ -137,8 +137,7 @@ object Hangman extends App {
   /**
    * EXERCISE
    *
-   * Implement hangman using `Dictionary.Dictionary` for the words,
-   * and the above helper functions.
+   * Execute the main function and verify your program works as intended.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     (for {
@@ -267,7 +266,10 @@ object TicTacToe extends App {
     .render
 
   /**
-   * The entry point to the game will be here.
+   * EXERCISE
+   *
+   * Implement a game of tic-tac-toe, where the player gets to play against a
+   * computer opponent.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     putStrLn(TestBoard) as 0
