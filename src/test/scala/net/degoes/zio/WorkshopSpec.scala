@@ -5,7 +5,7 @@ import zio.duration._
 import zio.test._
 import zio.test.environment._
 import zio.test.Assertion._
-import zio.test.TestAspect.{ignore, timeout}
+import zio.test.TestAspect.{ ignore, timeout }
 
 object WorkshopSpec
     extends DefaultRunnableSpec({
@@ -15,14 +15,14 @@ object WorkshopSpec
       suite("Workshop tests")(
         testM("HelloWorld") {
           for {
-            value <- HelloWorld.run(Nil)
+            value  <- HelloWorld.run(Nil)
             output <- TestConsole.output
           } yield
             assert(value, equalTo(0)) &&
               assert(output, equalTo(Vector("Hello World!\n")))
         },
-        testM("ErrorRecovery") {
-          assertM(ErrorRecovery.run(Nil), equalTo(1))
+        testM("ErrorRecoveryOrElse") {
+          assertM(ErrorRecoveryOrElse.run(Nil), equalTo(1))
         },
         testM("PromptName") {
           ZIO(assertCompletes)
