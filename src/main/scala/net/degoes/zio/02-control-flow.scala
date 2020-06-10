@@ -1,6 +1,7 @@
 package net.degoes.zio
 
 import zio._
+import scala.collection.immutable.Nil
 
 object Looping extends App {
   import zio.console._
@@ -18,6 +19,7 @@ object Looping extends App {
 }
 
 object Interview extends App {
+  import java.io.IOException
   import zio.console._
 
   val questions =
@@ -29,11 +31,41 @@ object Interview extends App {
   /**
    * EXERCISE
    *
-   * Using `ZIO.foreach`, iterate over all of the `questions`, and for each
-   * question, print out the question, and read the answer from the console
-   * using `getStrLn`, collecting all of the answers into a list.
+   * Implement the `getAllAnswers` function in such a fashion that it will ask
+   * the user each question and collect them all into a list.
+   */
+  def getAllAnswers(questions: List[String]): ZIO[Console, IOException, List[String]] =
+    questions match {
+      case Nil     => ???
+      case q :: qs => ???
+    }
+
+  /**
+   * EXERCISE
    *
-   * Print out the answers when done.
+   * Use the preceding `getAllAnswers` function, together with the predefined
+   * `questions`, to ask the user a bunch of questions, and print the answers.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
+}
+
+object InterviewForeach extends App {
+  import zio.console._
+
+  val questions =
+    "Where where you born?" ::
+      "What color are your eyes?" ::
+      "What is your favorite movie?" ::
+      "What is your favorite number?" :: Nil
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO.foreach`, iterate over each question in `questions`, print the
+   * question to the user (`putStrLn`), read the answer from the user
+   * (`getStrLn`), and collect all answers into a collection. Finally, print
+   * out the contents of the collection.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???

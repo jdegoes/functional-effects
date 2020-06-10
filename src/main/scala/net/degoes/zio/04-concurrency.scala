@@ -2,6 +2,42 @@ package net.degoes.zio
 
 import zio._
 
+object ForkJoin extends App {
+  import zio.console._
+
+  val printer =
+    putStrLn(".").repeat(Schedule.recurs(10))
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#fork`, fork the `printer` into a separate fiber, and then
+   * print out a message, "Forked", then join the fiber using `Fiber#join`,
+   * and finally, print out a message "Joined".
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    printer as 0
+}
+
+object ForkInterrupt extends App {
+  import zio.console._
+  import zio.duration._
+
+  val infinitePrinter =
+    putStrLn(".").forever
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#fork`, fork the `printer` into a separate fiber, and then
+   * print out a message, "Forked", then using `ZIO.sleep`, sleep for 100
+   * milliseconds, then interrupt the fiber using `Fiber#interrupt`, and
+   * finally, print out a message "Interrupted".
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    (infinitePrinter *> ZIO.sleep(10.millis)) as 0
+}
+
 object ParallelFib extends App {
   import zio.console._
 
@@ -14,7 +50,7 @@ object ParallelFib extends App {
     def loop(n: Int, original: Int): UIO[BigInt] =
       if (n <= 1) UIO(n)
       else
-        UIO.unit.flatMap { _ =>
+        UIO.effectSuspendTotal {
           (loop(n - 1, original) zipWith loop(n - 2, original))(_ + _)
         }
 
@@ -108,40 +144,8 @@ object ComputePi extends App {
    * Build a multi-fiber program that estimates the value of `pi`. Print out
    * ongoing estimates continuously until the estimation is complete.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
-    def insideDelta(point: (Double, Double)): Int =
-      (if (insideCircle(point._1, point._2)) 1 else 0)
-
-    def makeEstimator(piState: PiState) = {
-      import piState.{ inside, total }
-
-      for {
-        point <- randomPoint
-        _     <- total.update(_ + 1) *> inside.update(_ + insideDelta(point))
-      } yield ()
-    }
-
-    def makeWorker(piState: PiState) = makeEstimator(piState).forever
-
-    def makeStatusReporter(piState: PiState) =
-      (for {
-        total  <- piState.total.get
-        inside <- piState.inside.get
-        _      <- putStrLn(estimatePi(inside, total).toString)
-        _      <- ZIO.sleep(1.second)
-      } yield ()).forever
-
-    for {
-      id      <- ZIO.fiberId
-      dumps   <- Fiber.dump
-      _       <- ZIO.foreach(dumps) { _.prettyPrintM.flatMap(putStrLn(_)) }
-      _       <- putStrLn(s"${id.toString()}: Enter any input to exit...")
-      piState <- (Ref.make(0L) zipWith Ref.make(0L))(PiState(_, _))
-      workers <- ZIO.forkAll(List.fill(4)(makeWorker(piState)))
-      fiber   <- makeStatusReporter(piState).fork.map(_ zip workers)
-      _       <- getStrLn.orDie *> fiber.interrupt
-    } yield 0
-  }
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
 }
 
 object StmSwap extends App {
