@@ -146,9 +146,6 @@ object ErrorRecoveryIgnore extends App {
 object ErrorNarrowing extends App {
   import java.io.IOException
   import scala.io.StdIn.readLine
-  implicit class Unimplemented[A](v: A) {
-    def ? = ???
-  }
 
   val broadReadLine: IO[Throwable, String] = ZIO.effect(scala.io.StdIn.readLine())
 
@@ -158,7 +155,7 @@ object ErrorNarrowing extends App {
    * Using `ZIO#refineToOrDie`, narrow the error type of `broadReadLine` into
    * an `IOException`:
    */
-  val myReadLine: IO[IOException, String] = broadReadLine ?
+  val myReadLine: IO[IOException, String] = ???
 
   def myPrintLn(line: String): UIO[Unit] = UIO(println(line))
 

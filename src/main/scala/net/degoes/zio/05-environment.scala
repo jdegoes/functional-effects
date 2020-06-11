@@ -3,39 +3,39 @@ package net.degoes.zio
 import zio._
 
 object AccessEnvironment extends App {
-  import zio.console._ 
+  import zio.console._
 
   final case class Config(server: String, port: Int)
 
   /**
-    * EXERCISE
-    * 
-    * Using `ZIO.access`, access a `Config` type from the environment, and 
-    * extract the `server` field from it.
-    */
+   * EXERCISE
+   *
+   * Using `ZIO.access`, access a `Config` type from the environment, and
+   * extract the `server` field from it.
+   */
   val accessServer: ZIO[Config, Nothing, String] = ???
 
   /**
-    * EXERCISE
-    * 
-    * Using `ZIO.access`, access a `Config` type from the environment, and 
-    * extract the `port` field from it.
-    */
+   * EXERCISE
+   *
+   * Using `ZIO.access`, access a `Config` type from the environment, and
+   * extract the `port` field from it.
+   */
   val accessPort: ZIO[Config, Nothing, Int] = ???
 
   def run(args: List[String]) = {
     val config = Config("localhost", 7878)
 
     (for {
-      server <- accessServer 
-      port   <- accessPort 
+      server <- accessServer
+      port   <- accessPort
       _      <- UIO(println(s"Configuration: ${server}:${port}"))
     } yield 0).provide(config)
   }
 }
 
 object ProvideEnvironment extends App {
-  import zio.console._ 
+  import zio.console._
 
   final case class Config(server: String, port: Int)
 
@@ -43,20 +43,20 @@ object ProvideEnvironment extends App {
     def query(query: String): Task[Int] = Task(42)
   }
 
-  val getServer: ZIO[Config, Nothing, String] = 
+  val getServer: ZIO[Config, Nothing, String] =
     ZIO.access[Config](_.server)
 
-  def useDatabaseConnection: ZIO[DatabaseConnection, Throwable, Int] = 
+  def useDatabaseConnection: ZIO[DatabaseConnection, Throwable, Int] =
     ZIO.accessM[DatabaseConnection](_.query("SELECT * FROM USERS"))
 
   /**
-    * EXERCISE
-    * 
-    * Compose both the `getServer` and `useDatabaseConnection` effects together.
-    * In order to do this successfully, you will have to use `ZIO#provide` to 
-    * give them the environment that they need in order to run, then they can 
-    * be composed because their environment types will be compatible.
-    */
+   * EXERCISE
+   *
+   * Compose both the `getServer` and `useDatabaseConnection` effects together.
+   * In order to do this successfully, you will have to use `ZIO#provide` to
+   * give them the environment that they need in order to run, then they can
+   * be composed because their environment types will be compatible.
+   */
   def run(args: List[String]) = {
     val config = Config("localhost", 7878)
 

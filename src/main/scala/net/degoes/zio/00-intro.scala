@@ -82,7 +82,7 @@ object ZIOModel {
     ZIO.effect(scala.io.StdIn.readLine()).orDie
 
   def unsafeRun[A](zio: ZIO[Any, Throwable, A]): A =
-    zio.run(()).fold(throw _, identity(_))
+    zio.run(()).fold(throw _, a => a)
 
   /**
    * Run the following main function and compare the results with your
@@ -109,6 +109,19 @@ object ZIOTypes {
   type RIO[-R, +A]  = ???
   type IO[+E, +A]   = ???
   type URIO[-R, +A] = ???
+}
+
+object SuccessEffect extends App {
+  import zio.console._
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO.succeed`, create an effect that succeeds with a success
+   * `ExitCode`.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ???
 }
 
 object HelloWorld extends App {
@@ -291,6 +304,8 @@ object NumberGuesser extends App {
   import zio.console._
   import zio.random._
 
+  val readLine = getStrLn.orDie
+
   def analyzeAnswer(random: Int, guess: String) =
     if (random.toString == guess.trim) putStrLn("You guessed correctly!")
     else putStrLn(s"You did not guess correctly. The answer was ${random}")
@@ -299,20 +314,8 @@ object NumberGuesser extends App {
    * EXERCISE
    *
    * Choose a random number (using `nextInt`), and then ask the user to guess
-   * the number, feeding their response to `analyzeAnswer`, above.
-   */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ???
-}
-
-object SuccessEffects extends App {
-  import zio.console._
-
-  /**
-   * EXERCISE
-   *
-   * Using `ZIO.succeed`, create an effect that succeeds with a success
-   * `ExitCode`.
+   * the number (using `getStrLn`), feeding their response to `analyzeAnswer`,
+   * above.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     ???
@@ -326,10 +329,10 @@ object SingleSideEffect extends App {
    * Using ZIO.effect, convert the side-effecting of `println` into a pure
    * functional effect.
    */
-  def myPrintLn(line: String): Task[Unit] = UIO(println(line))
+  def myPrintLn(line: String): Task[Unit] = ???
 
   def run(args: List[String]) =
-    ???
+    myPrintLn("Hello World!").fold(_ => 1, _ => 0)
 }
 
 object MultipleSideEffects extends App {
@@ -339,7 +342,7 @@ object MultipleSideEffects extends App {
    * into a functional effect, which describes the action of printing a line
    * of text to the console, but which does not actually perform the print.
    */
-  def putStrLn(line: String): Task[String] = ???
+  def putStrLn(line: String): Task[Unit] = ???
 
   /**
    * Using `ZIO.effect`, wrap Scala's `scala.io.StdIn.readLine()` method to
