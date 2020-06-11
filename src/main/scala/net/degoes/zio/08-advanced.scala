@@ -36,6 +36,6 @@ object Sharding extends App {
       _     <- queue.offer(1).forever.fork
       error <- shard(queue, 10, makeWorker(ref))
       _     <- putStrLn(s"Failed with ${error}")
-    } yield 0
+    } yield ExitCode.success
   }
 }

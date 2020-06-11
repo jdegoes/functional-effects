@@ -14,8 +14,8 @@ object Looping extends App {
   def repeat[R, E, A](n: Int)(effect: ZIO[R, E, A]): ZIO[R, E, A] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    repeat(100)(putStrLn("All work and no play makes Jack a dull boy")) as 0
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    repeat(100)(putStrLn("All work and no play makes Jack a dull boy")).exitCode
 }
 
 object Interview extends App {
@@ -46,7 +46,7 @@ object Interview extends App {
    * Use the preceding `getAllAnswers` function, together with the predefined
    * `questions`, to ask the user a bunch of questions, and print the answers.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -67,6 +67,6 @@ object InterviewForeach extends App {
    * (`getStrLn`), and collect all answers into a collection. Finally, print
    * out the contents of the collection.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }

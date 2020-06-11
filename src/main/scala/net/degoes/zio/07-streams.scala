@@ -3,6 +3,7 @@ package net.degoes.zio
 object ConsoleInput {
   import java.io.IOException
 
+  import zio._
   import zio.console._
   import zio.stream._
 
@@ -32,5 +33,9 @@ object ConsoleInput {
   }
 
   def run(args: List[String]) =
-    commandInput.tap(command => putStrLn(s"You entered: ${command}")).takeUntil(_ == Command.Quit).runDrain.ignore as 0
+    commandInput
+      .tap(command => putStrLn(s"You entered: ${command}"))
+      .takeUntil(_ == Command.Quit)
+      .runDrain
+      .ignore as ExitCode.success
 }

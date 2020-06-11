@@ -28,7 +28,7 @@ object SimpleActor extends App {
     ???
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
     val temperatures = (0 to 100).map(_.toDouble)
 
     (for {
@@ -38,7 +38,7 @@ object SimpleActor extends App {
           }
       temp <- actor(ReadTemperature)
       _    <- putStrLn(s"Final temperature is ${temp}")
-    } yield 0) orElse ZIO.succeed(1)
+    } yield ()).exitCode
   }
 }
 
@@ -139,14 +139,14 @@ object Hangman extends App {
    *
    * Execute the main function and verify your program works as intended.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
       name  <- getName
       word  <- chooseWord
       state = State(name, Set(), word)
       _     <- renderState(state)
       _     <- gameLoop(state)
-    } yield 0) orElse ZIO.succeed(1)
+    } yield ()).exitCode
 }
 
 object TicTacToe extends App {
@@ -271,6 +271,6 @@ object TicTacToe extends App {
    * Implement a game of tic-tac-toe, where the player gets to play against a
    * computer opponent.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    putStrLn(TestBoard) as 0
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    putStrLn(TestBoard).exitCode
 }

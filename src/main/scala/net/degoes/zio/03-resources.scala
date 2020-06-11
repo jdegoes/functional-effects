@@ -26,7 +26,7 @@ object Cat extends App {
    * Implement a version of the command-line utility "cat", which dumps the
    * contents of the specified file to standard output.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -83,7 +83,7 @@ object SourceManaged extends App {
    * can all be opened simultaneously. Otherwise, don't print out
    * anything except an error message.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -127,13 +127,13 @@ object CatIncremental extends App {
    * or `ZManaged` to ensure the file is closed in the event of error or
    * interruption.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     args match {
       case file :: Nil =>
         // (effect timeout 60.seconds) ensuring finalizer
-        (FileHandle.open(file).bracket(_.close.ignore)(cat) as 0) orElse ZIO
-          .succeed(1)
+        (FileHandle.open(file).bracket(_.close.ignore)(cat) as ExitCode.success) orElse ZIO
+          .succeed(ExitCode(1))
 
-      case _ => putStrLn("Usage: cat <file>") as 2
+      case _ => putStrLn("Usage: cat <file>") as ExitCode(2)
     }
 }

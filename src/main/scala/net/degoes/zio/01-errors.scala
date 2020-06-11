@@ -30,8 +30,8 @@ object ErrorConstructor extends App {
    */
   val failed: ZIO[Any, String, Nothing] = ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    failed.foldM(putStrLn(_), putStrLn(_)) as 0
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    failed.foldM(putStrLn(_), putStrLn(_)) as ExitCode.success
 }
 
 object ErrorRecoveryOrElse extends App {
@@ -45,7 +45,7 @@ object ErrorRecoveryOrElse extends App {
    * Using `ZIO#orElse` have the `run` function compose the preceding `failed`
    * effect with another effect that succeeds with a success exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -64,7 +64,7 @@ object ErrorShortCircuit extends App {
    * preceding `failed` effect with another effect that
    * succeeds with an exit code (created with `ZIO.succeed`).
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -79,7 +79,7 @@ object ErrorRecoveryFold extends App {
    * Using `ZIO#fold`, map both failure and success values of `failed` into
    * exit codes.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -94,7 +94,7 @@ object ErrorRecoveryCatchAll extends App {
    * Using `ZIO#catchAll`, catch all errors in `failed` and print them out to
    * the console using `putStrLn`.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -109,7 +109,7 @@ object ErrorRecoveryFoldM extends App {
    * Using `ZIO#foldM`, print out the success or failure value of `failed`
    * by using `putStrLn`.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -124,7 +124,7 @@ object ErrorRecoveryEither extends App {
    * Using `ZIO#either`, surface the error of `failed` into the success
    * channel, and then map the `Either[String, Int]` into an exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -139,7 +139,7 @@ object ErrorRecoveryIgnore extends App {
    * Using `ZIO#ignore`, simply ignore the failure of `failed`, and then map
    * the resulting unit into a successful exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }
 
@@ -159,12 +159,12 @@ object ErrorNarrowing extends App {
 
   def myPrintLn(line: String): UIO[Unit] = UIO(println(line))
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
       _    <- myPrintLn("What is your name?")
       name <- myReadLine
       _    <- myPrintLn(s"Good to meet you, ${name}")
-    } yield 0) orElse ZIO.succeed(1)
+    } yield ()).exitCode
 }
 
 object AlarmApp extends App {
@@ -201,6 +201,6 @@ object AlarmApp extends App {
    * sleeps the specified number of seconds using ZIO.sleep(d), and then
    * prints out a wakeup alarm message, like "Time to wakeup!!!".
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
 }

@@ -1,4 +1,4 @@
-val ZIOVersion = "1.0.0-RC17"
+val ZIOVersion = "1.0.0-RC20"
 
 lazy val root = project
   .in(file("."))
@@ -10,9 +10,7 @@ lazy val root = project
       """|import zio._
          |import zio.console._
          |import zio.duration._
-         |object replRTS extends DefaultRuntime {}
-         |import replRTS._
-         |implicit class RunSyntax[R >: ZEnv, E, A](io: ZIO[R, E, A]){ def unsafeRun: A = replRTS.unsafeRun(io) }
+         |implicit class RunSyntax[R >: ZEnv, E, A](io: ZIO[R, E, A]){ def unsafeRun: A = Runtime.default.unsafeRun(io) }
     """.stripMargin
   )
 

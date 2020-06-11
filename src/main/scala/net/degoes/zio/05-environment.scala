@@ -30,7 +30,7 @@ object AccessEnvironment extends App {
       server <- accessServer
       port   <- accessPort
       _      <- UIO(println(s"Configuration: ${server}:${port}"))
-    } yield 0).provide(config)
+    } yield ExitCode.success).provide(config)
   }
 }
 
@@ -116,5 +116,5 @@ object CustomEnvironment extends App {
                 .refineToOrDie[IOException]
           }
       })
-      .fold(_ => 1, _ => 0)
+      .exitCode
 }
