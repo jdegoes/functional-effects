@@ -14,8 +14,8 @@ object Cat extends App {
   /**
    * EXERCISE
    *
-   * Implement a function to read a file on the blocking thread pool, storing
-   * the result into a string.
+   * Using `effectBlockingIO`, implement a function to read a file on the
+   * blocking thread pool, storing the result into a string.
    */
   def readFile(file: String): ZIO[Blocking, IOException, String] =
     ???
@@ -30,6 +30,37 @@ object Cat extends App {
     ???
 }
 
+object CatBracket extends App {
+  import zio.console._
+  import zio.blocking._
+  import java.io.IOException
+  import scala.io.Source
+
+  def open(file: String): ZIO[Blocking, IOException, Source] =
+    effectBlockingIO(scala.io.Source.fromFile(file))
+
+  def close(source: Source): ZIO[Blocking, IOException, Unit] =
+    effectBlockingIO(source.close())
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#bracket`, implement a safe version of `readFile` that cannot
+   * fail to close the file, no matter what happens during reading.
+   */
+  def readFile(file: String): ZIO[Blocking, IOException, String] =
+    ???
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    (for {
+      fileName <- ZIO
+                   .fromOption(args.headOption)
+                   .tapError(_ => putStrLn("You must specify a file name on the command line"))
+      contents <- readFile(fileName)
+      _        <- putStrLn(contents)
+    } yield ()).exitCode
+}
+
 object SourceManaged extends App {
   import zio.console._
   import zio.blocking._
@@ -38,11 +69,11 @@ object SourceManaged extends App {
 
   import scala.io.Source
 
-  final class ZioSource private (private val source: Source) {
+  final class ZSource private (private val source: Source) {
     def execute[T](f: Source => T): ZIO[Blocking, IOException, T] =
       effectBlocking(f(source)).refineToOrDie[IOException]
   }
-  object ZioSource {
+  object ZSource {
 
     /**
      * EXERCISE
@@ -50,14 +81,14 @@ object SourceManaged extends App {
      * Use the `ZManaged.make` constructor to make a managed data type that
      * will automatically acquire and release the resource when it is used.
      */
-    def make(file: String): ZManaged[Blocking, IOException, ZioSource] = {
+    def make(file: String): ZManaged[Blocking, IOException, ZSource] = {
       // An effect that acquires the resource:
-      val open = effectBlocking(new ZioSource(Source.fromFile(file)))
+      val open = effectBlocking(new ZSource(Source.fromFile(file)))
         .refineToOrDie[IOException]
 
       // A function that, when given the resource, returns an effect that
       // releases the resource:
-      val close: ZioSource => ZIO[Blocking, Nothing, Unit] =
+      val close: ZSource => ZIO[Blocking, Nothing, Unit] =
         _.execute(_.close()).orDie
 
       ???
@@ -67,13 +98,13 @@ object SourceManaged extends App {
   /**
    * EXERCISE
    *
-   * Implement a function to read a file on the blocking thread pool, storing
-   * the result into a string.
+   * Using `ZManaged.foreachPar` and other functions as necessary, implement a function
+   * to read the contents of all files in parallel, but ensuring that if anything
+   * goes wrong during parallel reading, all files are safely closed.
    */
   def readFiles(
     files: List[String]
-  ): ZIO[Blocking with Console, IOException, Unit] =
-    ???
+  ): ZIO[Blocking with Console, IOException, List[String]] = ???
 
   /**
    * EXERCISE
@@ -92,31 +123,35 @@ object CatIncremental extends App {
   import zio.blocking._
   import java.io.{ FileInputStream, IOException, InputStream }
 
-  /**
-   * BONUS EXERCISE
-   *
-   * Implement a `blockingIO` combinator to use in subsequent exercises.
-   */
-  def blockingIO[A](a: => A): ZIO[Blocking, IOException, A] =
-    ???
+  final case class FileHandle private (private val is: InputStream) {
+    final def close: ZIO[Blocking, IOException, Unit] = effectBlockingIO(is.close())
+
+    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] =
+      effectBlockingIO {
+        val array = Array.ofDim[Byte](1024)
+        val len   = is.read(array)
+        if (len < 0) None
+        else Some(Chunk.fromArray(array).take(len))
+      }
+  }
 
   /**
    * EXERCISE
    *
-   * Implement all missing methods of `FileHandle`. Be sure to do all work on
-   * the blocking thread pool.
+   * Refactor `FileHandle` so that creating it returns a `ZManaged`, so that
+   * it is impossible to forget to close an open handle.
    */
-  final case class FileHandle private (private val is: InputStream) {
-    final def close: ZIO[Blocking, IOException, Unit] = ???
-
-    final def read: ZIO[Blocking, IOException, Option[Chunk[Byte]]] =
-      ???
-  }
   object FileHandle {
     final def open(file: String): ZIO[Blocking, IOException, FileHandle] =
-      ???
+      effectBlockingIO(new FileHandle(new FileInputStream(file)))
   }
 
+  /**
+   * EXERCISE
+   *
+   * Implement an incremental version of `cat` that pulls a chunk of bytes at
+   * a time, stopping when there are no more chunks left.
+   */
   def cat(fh: FileHandle): ZIO[Blocking with Console, IOException, Unit] =
     ???
 
@@ -129,10 +164,14 @@ object CatIncremental extends App {
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     args match {
-      case file :: Nil =>
-        // (effect timeout 60.seconds) ensuring finalizer
-        (FileHandle.open(file).bracket(_.close.ignore)(cat) as ExitCode.success) orElse ZIO
-          .succeed(ExitCode(1))
+      case _ :: Nil =>
+        /**
+         * EXERCISE
+         *
+         * Open the specified file, safely create and use a file handle to
+         * incrementally dump the contents of the file to standard output.
+         */
+        ???
 
       case _ => putStrLn("Usage: cat <file>") as ExitCode(2)
     }

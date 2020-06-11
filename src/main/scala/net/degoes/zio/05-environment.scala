@@ -64,7 +64,7 @@ object ProvideEnvironment extends App {
   }
 }
 
-object CustomEnvironment extends App {
+object CakeEnvironment extends App {
   import zio.console._
   import java.io.IOException
 
@@ -104,17 +104,67 @@ object CustomEnvironment extends App {
    */
   def run(args: List[String]) =
     effect
-      .provide(new Files with Logging {
-        val logging =
-          new Logging.Service {
-            def log(line: String): UIO[Unit] = UIO(println(line))
-          }
-        val files =
-          new Files.Service {
-            def read(file: String): IO[IOException, String] =
-              Task(scala.io.Source.fromFile(file).mkString)
-                .refineToOrDie[IOException]
-          }
-      })
+      .provide(???)
       .exitCode
+}
+
+object LayerEnvironment extends App {
+  import zio.console._
+  import java.io.IOException
+
+  type MyFx = Logging with Files
+
+  type Logging = Has[Logging.Service]
+  object Logging {
+    trait Service {
+      def log(line: String): UIO[Unit]
+    }
+
+    /**
+     * Using `ZLayer.fromFunction`, create a layer that requires `Console`
+     * and uses the console to provide a logging service.
+     */
+    val live: ZLayer[Console, Nothing, Logging] = ???
+
+    def log(line: String) = ZIO.accessM[Logging](_.get.log(line))
+  }
+
+  type Files = Has[Files.Service]
+  object Files {
+    trait Service {
+      def read(file: String): IO[IOException, String]
+    }
+
+    /**
+     * EXERCISE
+     *
+     * Using `ZLayer.succeed`, create a layer that implements the `Files`
+     * service.
+     */
+    val live: ZLayer[Any, Nothing, Files] = ???
+
+    def read(file: String) = ZIO.accessM[Files](_.get.read(file))
+  }
+
+  val effect =
+    (for {
+      file <- Files.read("build.sbt")
+      _    <- Logging.log(file)
+    } yield ())
+
+  def run(args: List[String]) = {
+
+    /**
+     * EXERCISE
+     *
+     * Run `effect` by using `ZIO#provideCustomLayer` to give it what it needs.
+     * You will have to build a value (the environment) of the required type
+     * (`Files with Logging`).
+     */
+    val env: ZLayer[Console, Nothing, Files with Logging] = ???
+
+    effect
+      .provideCustomLayer(env)
+      .exitCode
+  }
 }

@@ -154,6 +154,19 @@ object SimpleMap extends App {
     ???
 }
 
+object PrintSequenceZip extends App {
+  import zio.console._
+
+  /**
+   * EXERCISE
+   *
+   * Using `zip`, compose a sequence of `putStrLn` effects to produce an effect
+   * that prints three lines of text to the console.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    ???
+}
+
 object PrintSequence extends App {
   import zio.console._
 

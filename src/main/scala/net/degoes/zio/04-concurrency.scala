@@ -82,7 +82,7 @@ object AlarmAppImproved extends App {
         )
         .refineToOrDie[NumberFormatException]
 
-    val fallback = putStrLn("You didn't enter the number of seconds!") *> getAlarmDuration
+    val fallback = putStrLn("You didn't enter a number of seconds!") *> getAlarmDuration
 
     for {
       _        <- putStrLn("Please enter the number of seconds to sleep: ")
@@ -203,6 +203,23 @@ object StmSwap extends App {
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     exampleStm.map(_.toString).flatMap(putStrLn(_)).exitCode
+}
+
+object ParallelZip extends App {
+  def fib(n: Int): UIO[Int] =
+    if (n <= 1) UIO(n)
+    else
+      UIO.effectSuspendTotal {
+        (fib(n - 1) zipWith fib(n - 2))(_ + _)
+      }
+
+  /**
+   * EXERCISE
+   *
+   * Compute fib(10) and fib(13) in parallel using `ZIO#zipPar`, and display
+   * the result.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = ???
 }
 
 object StmLock extends App {

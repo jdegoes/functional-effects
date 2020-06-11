@@ -205,19 +205,47 @@ object AlarmApp extends App {
     ???
 }
 
-object Cause extends App {
+object SequentialCause extends App {
   import zio.console._
 
-  val failed1 = ZIO.fail("Uh oh 1")
-  val failed2 = ZIO.fail("Uh oh 2")
-
-  val composed = ZIO.uninterruptible(failed1 zipPar failed2)
+  val failed1 = Cause.fail("Uh oh 1")
+  val failed2 = Cause.fail("Uh oh 2")
 
   /**
    * EXERCISE
    *
-   * Using `ZIO#catchAllCause`, surface the underlying `Cause` data type in
-   * `composed`, and log it to the console using `putStrLn`.
+   * Using `Cause.++`, form a sequential cause by composing `failed1`
+   * and `failed2`.
+   */
+  lazy val composed = ???
+
+  /**
+   * EXERCISE
+   *
+   * Using `Cause.prettyPrint`, dump out `composed` to the console.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    ???
+}
+
+object ParalellCause extends App {
+  import zio.console._
+
+  val failed1 = Cause.fail("Uh oh 1")
+  val failed2 = Cause.fail("Uh oh 2")
+
+  /**
+   * EXERCISE
+   *
+   * Using `Cause.&&`, form a parallel cause by composing `failed1`
+   * and `failed2`.
+   */
+  lazy val composed = ???
+
+  /**
+   * EXERCISE
+   *
+   * Using `Cause.prettyPrint`, dump out `composed` to the console.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
@@ -226,17 +254,20 @@ object Cause extends App {
 object Sandbox extends App {
   import zio.console._
 
-  val failed1   = ZIO.fail("Uh oh 1")
-  val failed2   = ZIO.fail("Uh oh 2")
-  val finalizer = ZIO.fail(new Exception("Finalizing!")).orDie
+  val failed1    = ZIO.fail("Uh oh 1")
+  val failed2    = ZIO.fail("Uh oh 2")
+  val finalizer1 = ZIO.fail(new Exception("Finalizing 1!")).orDie
+  val finalizer2 = ZIO.fail(new Exception("Finalizing 2!")).orDie
 
-  val composed = ZIO.uninterruptible(failed1 zipPar failed2)
+  val composed = ZIO.uninterruptible {
+    (failed1 ensuring finalizer1) zipPar (failed2 ensuring finalizer2)
+  }
 
   /**
    * EXERCISE
    *
    * Using `ZIO#sandbox`, sandbox the `composed` effect and print out the
-   * resulting `Exit` value to the console using `putStrLn`.
+   * resulting `Cause` value to the console using `putStrLn`.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
