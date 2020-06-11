@@ -198,8 +198,45 @@ object AlarmApp extends App {
    * EXERCISE
    *
    * Create a program that asks the user for a number of seconds to sleep,
-   * sleeps the specified number of seconds using ZIO.sleep(d), and then
+   * sleeps the specified number of seconds using `ZIO.sleep(d)`, and then
    * prints out a wakeup alarm message, like "Time to wakeup!!!".
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    ???
+}
+
+object Cause extends App {
+  import zio.console._
+
+  val failed1 = ZIO.fail("Uh oh 1")
+  val failed2 = ZIO.fail("Uh oh 2")
+
+  val composed = ZIO.uninterruptible(failed1 zipPar failed2)
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#catchAllCause`, surface the underlying `Cause` data type in
+   * `composed`, and log it to the console using `putStrLn`.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    ???
+}
+
+object Sandbox extends App {
+  import zio.console._
+
+  val failed1   = ZIO.fail("Uh oh 1")
+  val failed2   = ZIO.fail("Uh oh 2")
+  val finalizer = ZIO.fail(new Exception("Finalizing!")).orDie
+
+  val composed = ZIO.uninterruptible(failed1 zipPar failed2)
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#sandbox`, sandbox the `composed` effect and print out the
+   * resulting `Exit` value to the console using `putStrLn`.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???
