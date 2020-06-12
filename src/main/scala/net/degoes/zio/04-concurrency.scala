@@ -44,7 +44,7 @@ object ParallelFib extends App {
   /**
    * EXERCISE
    *
-   * Rewrite this implementation to compute nth fibanacci number in parallel.
+   * Rewrite this implementation to compute nth fibonacci number in parallel.
    */
   def fib(n: Int): UIO[BigInt] = {
     def loop(n: Int, original: Int): UIO[BigInt] =

@@ -40,7 +40,7 @@ object ZIOModel {
    * Implement all missing methods on the ZIO companion object.
    */
   object ZIO {
-    def succeed[E](e: => E): ZIO[Any, E, Nothing] = ???
+    def succeed[A](a: => A): ZIO[Any, Nothing, A] = ???
 
     def fail[E](e: => E): ZIO[Any, E, Nothing] = ???
 
