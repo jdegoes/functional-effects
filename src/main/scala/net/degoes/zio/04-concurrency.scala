@@ -482,13 +482,14 @@ object StmDiningPhilosophers extends App {
   ): STM[Nothing, (Fork, Fork)] =
     ???
 
+  /**
+   * EXERCISE
+   *
+   * Using STM, implement the logic of a philosopher to release both forks.
+   */
   def putForks(left: TRef[Option[Fork]], right: TRef[Option[Fork]])(
     tuple: (Fork, Fork)
-  ) = {
-    val (leftFork, rightFork) = tuple
-
-    right.set(Some(rightFork)) *> left.set(Some(leftFork))
-  }
+  ): STM[Nothing, Unit] = ???
 
   def setupTable(size: Int): ZIO[Any, Nothing, Roundtable] = {
     val makeFork = TRef.make[Option[Fork]](Some(Fork))

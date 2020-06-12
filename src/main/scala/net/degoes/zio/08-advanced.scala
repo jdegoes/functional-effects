@@ -97,6 +97,8 @@ object Sharding extends App {
 object parallel_web_crawler {
   import zio.blocking._
   import zio.console._
+  import zio.duration._
+  import zio.clock._
 
   type Web = Has[Web.Service]
   object Web {
@@ -140,7 +142,19 @@ object parallel_web_crawler {
     seeds: Set[URL],
     router: URL => Set[URL],
     processor: (URL, String) => IO[E, Unit]
-  ): ZIO[Web, Nothing, List[E]] = ???
+  ): ZIO[Web with Clock, Nothing, List[E]] = {
+    val emptySet = ZIO.succeed(Set.empty[URL])
+
+    def loop(seeds: Set[URL], ref: Ref[CrawlState[E]]): ZIO[Web with Clock, Nothing, Unit] =
+      if (seeds.isEmpty) ZIO.unit
+      else ???
+
+    for {
+      ref   <- Ref.make[CrawlState[E]](CrawlState(seeds, Nil))
+      _     <- loop(seeds, ref)
+      state <- ref.get
+    } yield state.errors
+  }
 
   /**
    * A data structure representing a structured URL, with a smart constructor.

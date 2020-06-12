@@ -46,7 +46,7 @@ object ProvideEnvironment extends App {
   val getServer: ZIO[Config, Nothing, String] =
     ZIO.access[Config](_.server)
 
-  def useDatabaseConnection: ZIO[DatabaseConnection, Throwable, Int] =
+  val useDatabaseConnection: ZIO[DatabaseConnection, Throwable, Int] =
     ZIO.accessM[DatabaseConnection](_.query("SELECT * FROM USERS"))
 
   /**
@@ -90,10 +90,10 @@ object CakeEnvironment extends App {
   }
 
   val effect =
-    (for {
+    for {
       file <- Files.read("build.sbt")
       _    <- Logging.log(file)
-    } yield ())
+    } yield ()
 
   /**
    * EXERCISE
@@ -108,26 +108,37 @@ object CakeEnvironment extends App {
       .exitCode
 }
 
+object HasMap extends App {
+  trait Logging
+  object Logging extends Logging
+
+  trait Database
+  object Database extends Database
+
+  trait Cache
+  object Cache extends Cache
+
+  val hasLogging = Has(Logging: Logging)
+
+  val hasDatabase = Has(Database: Database)
+
+  val hasCache = Has(Cache: Cache)
+
+  val allThree = hasLogging ++ hasDatabase ++ hasCache
+
+  val logging  = allThree.get[Logging]
+  val database = allThree.get[Database]
+  val cache    = allThree.get[Cache]
+
+  def run(args: List[String]) = ???
+}
+
 object LayerEnvironment extends App {
   import zio.console._
   import java.io.IOException
+  import zio.blocking._
 
   type MyFx = Logging with Files
-
-  type Logging = Has[Logging.Service]
-  object Logging {
-    trait Service {
-      def log(line: String): UIO[Unit]
-    }
-
-    /**
-     * Using `ZLayer.fromFunction`, create a layer that requires `Console`
-     * and uses the console to provide a logging service.
-     */
-    val live: ZLayer[Console, Nothing, Logging] = ???
-
-    def log(line: String) = ZIO.accessM[Logging](_.get.log(line))
-  }
 
   type Files = Has[Files.Service]
   object Files {
@@ -141,9 +152,26 @@ object LayerEnvironment extends App {
      * Using `ZLayer.succeed`, create a layer that implements the `Files`
      * service.
      */
-    val live: ZLayer[Any, Nothing, Files] = ???
+    val live: ZLayer[Blocking, Nothing, Files] = ???
 
     def read(file: String) = ZIO.accessM[Files](_.get.read(file))
+  }
+
+  type Logging = Has[Logging.Service]
+  object Logging {
+    trait Service {
+      def log(line: String): UIO[Unit]
+    }
+
+    /**
+     * EXERCISE
+     *
+     * Using `ZLayer.fromFunction`, create a layer that requires `Console`
+     * and uses the console to provide a logging service.
+     */
+    val live: ZLayer[Console, Nothing, Logging] = ???
+
+    def log(line: String) = ZIO.accessM[Logging](_.get.log(line))
   }
 
   val effect =
@@ -152,7 +180,7 @@ object LayerEnvironment extends App {
       _    <- Logging.log(file)
     } yield ())
 
-  def run(args: List[String]) = {
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
 
     /**
      * EXERCISE
@@ -161,7 +189,8 @@ object LayerEnvironment extends App {
      * You will have to build a value (the environment) of the required type
      * (`Files with Logging`).
      */
-    val env: ZLayer[Console, Nothing, Files with Logging] = ???
+    val env: ZLayer[Console, Nothing, Files with Logging] =
+      ???
 
     effect
       .provideCustomLayer(env)
