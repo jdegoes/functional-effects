@@ -148,6 +148,26 @@ object ComputePi extends App {
     ???
 }
 
+object ParallelZip extends App {
+  import zio.console._
+
+  def fib(n: Int): UIO[Int] =
+    if (n <= 1) UIO(n)
+    else
+      UIO.effectSuspendTotal {
+        (fib(n - 1) zipWith fib(n - 2))(_ + _)
+      }
+
+  /**
+   * EXERCISE
+   *
+   * Compute fib(10) and fib(13) in parallel using `ZIO#zipPar`, and display
+   * the result.
+   */
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    (fib(10) zipPar fib(13)).flatMap(t => putStrLn(t.toString)).exitCode
+}
+
 object StmSwap extends App {
   import zio.console._
   import zio.stm._
@@ -158,7 +178,7 @@ object StmSwap extends App {
    * Demonstrate the following code does not reliably swap two values in the
    * presence of concurrency.
    */
-  def exampleRef = {
+  def exampleRef: UIO[Int] = {
     def swap[A](ref1: Ref[A], ref2: Ref[A]): UIO[Unit] =
       for {
         v1 <- ref1.get
@@ -182,44 +202,10 @@ object StmSwap extends App {
    *
    * Using `STM`, implement a safe version of the swap function.
    */
-  def exampleStm = {
-    def swap[A](ref1: TRef[A], ref2: TRef[A]): UIO[Unit] =
-      (for {
-        v1 <- ref1.get
-        v2 <- ref2.get
-        _  <- ref2.set(v1)
-        _  <- ref1.set(v2)
-      } yield ()).commit
-
-    for {
-      ref1   <- TRef.make(100).commit
-      ref2   <- TRef.make(0).commit
-      fiber1 <- swap(ref1, ref2).repeat(Schedule.recurs(100)).fork
-      fiber2 <- swap(ref2, ref1).repeat(Schedule.recurs(100)).fork
-      _      <- (fiber1 zip fiber2).join
-      value  <- (ref1.get zipWith ref2.get)(_ + _).commit
-    } yield value
-  }
+  def exampleStm: UIO[Int] = ???
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    exampleStm.map(_.toString).flatMap(putStrLn(_)).exitCode
-}
-
-object ParallelZip extends App {
-  def fib(n: Int): UIO[Int] =
-    if (n <= 1) UIO(n)
-    else
-      UIO.effectSuspendTotal {
-        (fib(n - 1) zipWith fib(n - 2))(_ + _)
-      }
-
-  /**
-   * EXERCISE
-   *
-   * Compute fib(10) and fib(13) in parallel using `ZIO#zipPar`, and display
-   * the result.
-   */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = ???
+    exampleRef.map(_.toString).flatMap(putStrLn(_)).exitCode
 }
 
 object StmLock extends App {
@@ -233,20 +219,11 @@ object StmLock extends App {
    * acquisition, and release methods.
    */
   class Lock private (tref: TRef[Boolean]) {
-    def acquire: UIO[Unit] =
-      (for {
-        locked <- tref.get
-        _      <- STM.check(locked == false)
-        _      <- tref.set(true)
-      } yield ()).commit
-
-    def release: UIO[Unit] = tref.set(false).commit
+    def acquire: UIO[Unit] = ???
+    def release: UIO[Unit] = ???
   }
   object Lock {
-    def make: UIO[Lock] =
-      (for {
-        tref <- TRef.make(false)
-      } yield new Lock(tref)).commit
+    def make: UIO[Lock] = ???
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
@@ -275,24 +252,11 @@ object StmQueue extends App {
    * Using STM, implement a async queue with double back-pressuring.
    */
   class Queue[A] private (capacity: Int, queue: TRef[ScalaQueue[A]]) {
-    def take: UIO[A] =
-      (for {
-        tuple <- queue.get.map(_.dequeueOption).collect {
-                  case Some(tuple) => tuple
-                }
-        _ <- queue.set(tuple._2)
-      } yield tuple._1).commit
-
-    def offer(a: A): UIO[Unit] =
-      (for {
-        q <- queue.get
-        _ <- STM.check(q.length < capacity)
-        _ <- queue.set(q.enqueue(a))
-      } yield ()).commit
+    def take: UIO[A]           = ???
+    def offer(a: A): UIO[Unit] = ???
   }
   object Queue {
-    def bounded[A](capacity: Int): UIO[Queue[A]] =
-      TRef.make(ScalaQueue.empty[A]).map(new Queue(capacity, _)).commit
+    def bounded[A](capacity: Int): UIO[Queue[A]] = ???
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
@@ -354,11 +318,7 @@ object StmLunchTime extends App {
    *
    * Using STM, implement a method that feeds a single attendee.
    */
-  def feedAttendee(t: Table, a: Attendee): STM[Nothing, Unit] =
-    for {
-      index <- t.findEmptySeat.collect { case Some(index) => index }
-      _     <- t.takeSeat(index) *> a.feed *> t.vacateSeat(index)
-    } yield ()
+  def feedAttendee(t: Table, a: Attendee): STM[Nothing, Unit] = ???
 
   /**
    * EXERCISE
@@ -404,43 +364,12 @@ object StmPriorityQueue extends App {
     minLevel: TRef[Option[Int]],
     map: TMap[Int, TQueue[A]]
   ) {
-    def offer(a: A, priority: Int): STM[Nothing, Unit] =
-      for {
-        option <- map.get(priority)
-        queue <- option match {
-                  case None =>
-                    for {
-                      tqueue <- TQueue.bounded[A](Int.MaxValue)
-                      _      <- map.put(priority, tqueue)
-                    } yield tqueue
+    def offer(a: A, priority: Int): STM[Nothing, Unit] = ???
 
-                  case Some(value) => STM.succeed(value)
-                }
-        _ <- queue.offer(a)
-        _ <- minLevel.update(
-              option => Some(option.fold(priority)(_ min priority))
-            )
-      } yield ()
-
-    def take: STM[Nothing, A] = {
-      val setMinLevel =
-        map.keys.flatMap(list => minLevel.set(list.sorted.headOption))
-
-      for {
-        level  <- minLevel.get.collect { case Some(level) => level }
-        tqueue <- map.get(level).collect { case Some(tqueue) => tqueue }
-        head   <- tqueue.take
-        size   <- tqueue.size
-        _      <- if (size == 0) map.delete(level) *> setMinLevel else STM.unit
-      } yield head
-    }
+    def take: STM[Nothing, A] = ???
   }
   object PriorityQueue {
-    def make[A]: STM[Nothing, PriorityQueue[A]] =
-      for {
-        minLevel <- TRef.make(Option.empty[Int])
-        map      <- TMap.empty[Int, TQueue[A]]
-      } yield new PriorityQueue(minLevel, map)
+    def make[A]: STM[Nothing, PriorityQueue[A]] = ???
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
@@ -508,24 +437,20 @@ object StmReentrantLock extends App {
    * Using STM, implement a reentrant read/write lock.
    */
   class ReentrantReadWriteLock(data: TRef[Either[ReadLock, WriteLock]]) {
-    def writeLocks: UIO[Int] = data.get.map(_.fold(_ => 0, _.writeCount)).commit
+    def writeLocks: UIO[Int] = ???
 
-    def writeLocked: UIO[Boolean] = writeLocks.map(_ > 0)
+    def writeLocked: UIO[Boolean] = ???
 
-    def readLocks: UIO[Int] = data.get.map(_.fold(_.total, _.readCount)).commit
+    def readLocks: UIO[Int] = ???
 
-    def readLocked: UIO[Boolean] = readLocks.map(_ > 0)
+    def readLocked: UIO[Boolean] = ???
 
     val read: Managed[Nothing, Int] = ???
 
     val write: Managed[Nothing, Int] = ???
   }
   object ReentrantReadWriteLock {
-    def make: UIO[ReentrantReadWriteLock] =
-      TRef
-        .make[Either[ReadLock, WriteLock]](Left(ReadLock.empty))
-        .map(tref => new ReentrantReadWriteLock(tref))
-        .commit
+    def make: UIO[ReentrantReadWriteLock] = ???
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = ???
