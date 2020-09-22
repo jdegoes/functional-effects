@@ -104,9 +104,9 @@ object AlarmAppImproved extends App {
 }
 
 /**
-  * Effects can be forked to run in separate fibers. Sharing information between fibers can be done 
-  * using the `Ref` data type, which is like a concurrent version of a Scala `var`.
-  */
+ * Effects can be forked to run in separate fibers. Sharing information between fibers can be done
+ * using the `Ref` data type, which is like a concurrent version of a Scala `var`.
+ */
 object ComputePi extends App {
   import zio.random._
   import zio.console._
