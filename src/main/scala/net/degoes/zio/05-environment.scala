@@ -108,6 +108,12 @@ object CakeEnvironment extends App {
       .exitCode
 }
 
+/**
+ * Although there are no requirements on how the ZIO environment may be used to pass context
+ * around in an application, for easier composition, ZIO includes a data type called `Has`,
+ * which represents a map from a type to an object that satisfies that type. Sometimes, this is
+ * called a "Has Map" or more imprecisely, a "type-level map".
+ */
 object HasMap extends App {
   trait Logging
   object Logging extends Logging
@@ -124,15 +130,44 @@ object HasMap extends App {
 
   val hasCache = Has(Cache: Cache)
 
-  val allThree = hasLogging ++ hasDatabase ++ hasCache
+  /**
+   * EXERCISE
+   *
+   * Using the `++` operator on `Has`, combine the three maps (`hasLogging`, `hasDatabase`, and
+   * `hasCache`) into a single map that has all three objects.
+   */
+  val allThree: Has[Database] with Has[Cache] with Has[Logging] = ???
 
-  val logging  = allThree.get[Logging]
-  val database = allThree.get[Database]
-  val cache    = allThree.get[Cache]
+  /**
+   * EXERCISE
+   *
+   * Using `Has#get`, which can retrieve an object stored in the map, retrieve the logging,
+   * database, and cache objects from `allThree`. Note that you will have to specify the type
+   * parameter, as it cannot be inferred (the map needs to know which of the objects you want to
+   * retrieve, and that can be specified only by type).
+   */
+  lazy val logging  = ???
+  lazy val database = ???
+  lazy val cache    = ???
 
   def run(args: List[String]) = ???
 }
 
+/**
+ * In ZIO, layers are essentially wrappers around constructors for services in your application.
+ * Services provide functionality like persistence or logging or authentication, and they are used
+ * by business logic.
+ *
+ * A layer is a lot like a constructor, except that a constructor can only "construct" a single
+ * service. Layers can construct many services. In addition, this construction can be resourceful,
+ * and even asynchronous or concurrent.
+ *
+ * Layers bring more power and compositionality to constructors. Although you don't have to use
+ * them to benefit from ZIO environment, they can make it easier to assemble applications out of
+ * modules without having to do any wiring, and with great support for testability.
+ *
+ * ZIO services like `Clock` and `System` are all designed to work well with layers.
+ */
 object LayerEnvironment extends App {
   import zio.console._
   import java.io.IOException

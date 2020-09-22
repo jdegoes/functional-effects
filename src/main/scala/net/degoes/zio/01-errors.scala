@@ -60,9 +60,8 @@ object ErrorShortCircuit extends App {
   /**
    * EXERCISE
    *
-   * Using `ZIO#orElse` have the `run` function compose the
-   * preceding `failed` effect with another effect that
-   * succeeds with an exit code (created with `ZIO.succeed`).
+   * Using `ZIO#orElse`, compose the `failed` effect with another effect that
+   * succeeds with an exit code.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     ???

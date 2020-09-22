@@ -225,9 +225,8 @@ object TicTacToe extends App {
       colInc: Int
     ): Iterable[Option[Mark]] =
       for {
-        row <- (row0 to (row0 + rowInc * 2))
-        col <- (col0 to (col0 + colInc * 2))
-      } yield value(row)(col)
+        i <- 0 to 2
+      } yield value(row0 + rowInc * i)(col0 + colInc * i)
   }
   object Board {
     final val empty = new Board(Vector.fill(3)(Vector.fill(3)(None)))

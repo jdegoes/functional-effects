@@ -103,6 +103,10 @@ object AlarmAppImproved extends App {
     ???
 }
 
+/**
+  * Effects can be forked to run in separate fibers. Sharing information between fibers can be done 
+  * using the `Ref` data type, which is like a concurrent version of a Scala `var`.
+  */
 object ComputePi extends App {
   import zio.random._
   import zio.console._
@@ -190,8 +194,8 @@ object StmSwap extends App {
     for {
       ref1   <- Ref.make(100)
       ref2   <- Ref.make(0)
-      fiber1 <- swap(ref1, ref2).repeat(Schedule.recurs(100)).fork
-      fiber2 <- swap(ref2, ref1).repeat(Schedule.recurs(100)).fork
+      fiber1 <- swap(ref1, ref2).repeatN(100).fork
+      fiber2 <- swap(ref2, ref1).repeatN(100).fork
       _      <- (fiber1 zip fiber2).join
       value  <- (ref1.get zipWith ref2.get)(_ + _)
     } yield value
@@ -325,7 +329,7 @@ object StmLunchTime extends App {
    *
    * Using STM, implement a method that feeds only the starving attendees.
    */
-  def feedStarving(table: Table, list: List[Attendee]): UIO[Unit] =
+  def feedStarving(table: Table, attendees: Iterable[Attendee]): UIO[Unit] =
     ???
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {

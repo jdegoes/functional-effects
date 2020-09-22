@@ -139,7 +139,7 @@ object Iterate extends App {
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     iterate(0)(_ < 100) { i =>
-      putStrLn(s"At iteration: ${i}") as (i + 1)
+      putStrLn(s"At iteration: ${i}").as(i + 1)
     }.exitCode
 }
 

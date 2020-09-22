@@ -12,7 +12,7 @@ object welcome {
   //
   // Daily Schedule:
   //
-  //    START : 10:00 AM
-  //    LUNCH :  1:00 PM
-  //    END   :  6:30 PM
+  //    START : 11:00 AM
+  //    LUNCH :  2:00 PM
+  //    END   :  7:00 PM
 }
