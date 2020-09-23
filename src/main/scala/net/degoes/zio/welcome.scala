@@ -4,11 +4,11 @@ object welcome {
   //
   // Please join and say hello:
   //
-  // CHAT ROOM:  https://gitter.im/jdegoes/functional-scala
+  // CHAT ROOM:  https://discord.gg/dAbfksd
   //
   // Please git clone and build:
   //
-  // REPOSITORY: https://github.com/jdegoes/zio-intro-game
+  // REPOSITORY: https://github.com/jdegoes/functional-effects
   //
   // Daily Schedule:
   //
