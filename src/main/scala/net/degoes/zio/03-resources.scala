@@ -30,6 +30,42 @@ object Cat extends App {
     ???
 }
 
+object CatEnsuring extends App {
+  import zio.console._
+  import zio.blocking._
+  import java.io.IOException
+  import scala.io.Source
+
+  def open(file: String): ZIO[Blocking, IOException, Source] =
+    effectBlockingIO(scala.io.Source.fromFile(file))
+
+  def close(source: Source): ZIO[Blocking, IOException, Unit] =
+    effectBlockingIO(source.close())
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#ensuring`, implement a safe version of `readFile` that cannot
+   * fail to close the file, no matter what happens during reading.
+   */
+  def readFile(file: String): ZIO[Blocking, IOException, String] =
+    ZIO.uninterruptible {
+      for {
+        source   <- open(file)
+        contents <- ZIO.effect(source.getLines().mkString("\n"))
+      } yield contents
+    }.refineToOrDie[IOException]
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+    (for {
+      fileName <- ZIO
+                   .fromOption(args.headOption)
+                   .tapError(_ => putStrLn("You must specify a file name on the command line"))
+      contents <- readFile(fileName)
+      _        <- putStrLn(contents)
+    } yield ()).exitCode
+}
+
 object CatBracket extends App {
   import zio.console._
   import zio.blocking._
