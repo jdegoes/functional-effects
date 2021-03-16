@@ -9,7 +9,7 @@ import zio._
  * of async, concurrent, resourceful, and contextual computations.
  *
  * The only effect type in ZIO is called ZIO, and has three type parameters,
- * which permit accessing context from an enviornment (`R`), failing with a
+ * which permit accessing context from an environment (`R`), failing with a
  * value of a certain type (`E`), and succeeding with a value of a certain
  * type (`A`).
  *
