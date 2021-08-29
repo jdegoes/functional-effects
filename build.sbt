@@ -1,16 +1,16 @@
-val ZIOVersion = "1.0.1"
+val ZIOVersion = "2.0.0-M2"
 
 lazy val root = project
   .in(file("."))
   .settings(
-    name := "zio-intro-game",
+    name := "functional-effects",
     organization := "net.degoes",
     scalaVersion := "2.12.11",
     initialCommands in Compile in console :=
       """|import zio._
-         |import zio.console._
+         |import zio.Console._
          |import zio.duration._
-         |implicit class RunSyntax[R >: ZEnv, E, A](io: ZIO[R, E, A]){ def unsafeRun: A = Runtime.default.unsafeRun(io) }
+         |implicit class RunSyntax[E, A](io: ZIO[ZEnv, E, A]){ def unsafeRun: A = Runtime.default.unsafeRun(io) }
     """.stripMargin
   )
 

@@ -4,22 +4,22 @@ object ConsoleInput extends zio.App {
   import java.io.IOException
 
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
 
   /**
    * EXERCISE
    *
-   * Using `ZStream.fromEffect` and `getStrLn`, construct a stream that
+   * Using `ZStream.fromEffect` and `readLine`, construct a stream that
    * will emit a single string, taken from the console.
    */
-  val singleRead: ZStream[Console, IOException, String] = ???
+  val singleRead: ZStream[Has[Console], IOException, String] = ???
 
   /**
    * Using `ZStream#forever`, take the `singleRead` stream, and turn it into
    * a stream that repeats forever.
    */
-  val consoleInput: ZStream[Console, IOException, String] = ???
+  val consoleInput: ZStream[Has[Console], IOException, String] = ???
 
   sealed trait Command
   object Command {
@@ -34,7 +34,7 @@ object ConsoleInput extends zio.App {
 
   def run(args: List[String]) =
     commandInput
-      .tap(command => putStrLn(s"You entered: ${command}"))
+      .tap(command => printLine(s"You entered: ${command}"))
       .takeUntil(_ == Command.Quit)
       .runDrain
       .ignore as ExitCode.success
@@ -42,9 +42,8 @@ object ConsoleInput extends zio.App {
 
 object FileStream extends zio.App {
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
-  import zio.blocking._
 
   import java.nio.file.Path
 
@@ -53,12 +52,12 @@ object FileStream extends zio.App {
    *
    * Using `ZStream.fromFile`, construct a stream of bytes from a file.
    */
-  def open(file: String): ZStream[Blocking, Throwable, Byte] = ???
+  def open(file: String): ZStream[Any, Throwable, Byte] = ???
 
   def run(args: List[String]) =
     (args match {
       case file :: Nil => open(file).foreach(byte => putStr(byte.toString()))
-      case _           => putStrLn("Expected file name!")
+      case _           => printLine("Expected file name!")
     }).exitCode
 }
 
@@ -68,9 +67,8 @@ object FileStream extends zio.App {
  */
 object StreamForeach extends zio.App {
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
-  import zio.blocking._
 
   import java.nio.file.Path
 
@@ -91,7 +89,7 @@ object StreamForeach extends zio.App {
   /**
    * EXERCISE
    *
-   * Using `ZStream#foreach`, which is one of the ways to "run" a stream, and `putStrLn`, print out
+   * Using `ZStream#foreach`, which is one of the ways to "run" a stream, and `printLine`, print out
    * each of the first 100 fibonacci numbers.
    */
   def run(args: List[String]) =
@@ -100,9 +98,8 @@ object StreamForeach extends zio.App {
 
 object StreamRunCollect extends zio.App {
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
-  import zio.blocking._
 
   import java.nio.file.Path
 
@@ -119,7 +116,7 @@ object StreamRunCollect extends zio.App {
    * EXERCISE
    *
    * Using `ZStream#runCollect`, which is one of the ways to "run" a stream, collect all of the
-   * numbers from the stream `first100`, and print them out using `putStrLn`.
+   * numbers from the stream `first100`, and print them out using `printLine`.
    */
   def run(args: List[String]) =
     ???
@@ -133,9 +130,8 @@ object StreamRunCollect extends zio.App {
  */
 object FileTransducer extends zio.App {
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
-  import zio.blocking._
 
   import java.nio.file.Path
 
@@ -145,7 +141,7 @@ object FileTransducer extends zio.App {
    * Using the `open` function you wrote in `FileStream` and `ZTransducer.utf8Decode`, construct a
    * stream of strings by using the `ZStream#>>>` method.
    */
-  def open(file: String): ZStream[Blocking, Throwable, String] = {
+  def open(file: String): ZStream[Any, Throwable, String] = {
     val _ = FileStream.open(file)
 
     ???
@@ -154,7 +150,7 @@ object FileTransducer extends zio.App {
   def run(args: List[String]) =
     (args match {
       case file :: Nil => open(file).foreach(putStr(_))
-      case _           => putStrLn("Expected file name!")
+      case _           => printLine("Expected file name!")
     }).exitCode
 }
 
@@ -168,9 +164,8 @@ object FileTransducer extends zio.App {
  */
 object FileSink extends zio.App {
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
-  import zio.blocking._
 
   import java.nio.file.Path
 
@@ -180,7 +175,7 @@ object FileSink extends zio.App {
    * Using the `open` function you wrote in `FileStream`, and `ZSink.fromFile`, implement a method
    * to copy a file from one location to another.
    */
-  def copy(source: String, dest: String): ZIO[Blocking, Throwable, Any] = {
+  def copy(source: String, dest: String): ZIO[Any, Throwable, Any] = {
     val _ = FileStream.open(source)
 
     ???
@@ -189,7 +184,7 @@ object FileSink extends zio.App {
   def run(args: List[String]) =
     (args match {
       case source :: dest :: Nil => copy(source, dest)
-      case _                     => putStrLn("Expected source and dest name!")
+      case _                     => printLine("Expected source and dest name!")
     }).exitCode
 }
 
@@ -198,9 +193,8 @@ object FileSink extends zio.App {
  */
 object FileSinkMapReduce extends zio.App {
   import zio._
-  import zio.console._
+  import zio.Console._
   import zio.stream._
-  import zio.blocking._
 
   import java.nio.file.Path
 
@@ -210,11 +204,11 @@ object FileSinkMapReduce extends zio.App {
    * Using `ZSink.fold`, create a custom sink that counts words in a file, and use that, together
    * with the other functionality you created or learned about, to implement a word count program.
    */
-  def wordCount(file: String): ZIO[Blocking, Throwable, Map[String, Int]] = ???
+  def wordCount(file: String): ZIO[Any, Throwable, Map[String, Int]] = ???
 
   def run(args: List[String]) =
     (args match {
-      case file :: Nil => wordCount(file).flatMap(map => putStrLn(map.mkString))
-      case _           => putStrLn("Expected name of file to word count!")
+      case file :: Nil => wordCount(file).flatMap(map => printLine(map.mkString))
+      case _           => printLine("Expected name of file to word count!")
     }).exitCode
 }

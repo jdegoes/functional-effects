@@ -38,7 +38,7 @@ object Retry {
   /**
    * EXERCISE
    *
-   * Using the `ZIO#repeat`, repeat the action putStrLn("Hi hi") using
+   * Using the `ZIO#repeat`, repeat the action printLine("Hi hi") using
    * `fiveTimesEverySecond`.
    */
   val repeated2 = ???
@@ -127,7 +127,7 @@ object Retry {
    * only do that for up to 100 times, and produce a list of the inputs to
    * the schedule.
    */
-  import zio.random.Random
+  import zio.Random
   import Schedule.{ collectAll, exponential, fixed, recurs }
   def mySchedule[A]: Schedule[ZEnv, A, List[A]] = ???
 }

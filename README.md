@@ -57,4 +57,4 @@ Good working knowledge of Scala, including familiarity with immutable data, patt
 
 # Legal
 
-Copyright&copy; 2019-2020 John A. De Goes. All rights reserved.
+Copyright&copy; 2019-2021 John A. De Goes. All rights reserved.

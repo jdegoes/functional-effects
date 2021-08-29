@@ -5,7 +5,7 @@ import zio.internal.Executor
 import scala.concurrent.ExecutionContext
 
 object PoolLocking extends App {
-  import zio.console._
+  import zio.Console._
 
   lazy val dbPool: Executor = Executor.fromExecutionContext(1024)(ExecutionContext.global)
 
@@ -44,20 +44,19 @@ object PoolLocking extends App {
    * determine which threads are executing which effects.
    */
   def run(args: List[String]) =
-    putStrLn("Main") *>
+    (printLine("Main") *>
       onDatabase {
-        putStrLn("Database") *>
-          blocking.blocking {
-            putStrLn("Blocking")
+        printLine("Database") *>
+          ZIO.blocking {
+            printLine("Blocking")
           } *>
-          putStrLn("Database")
+          printLine("Database")
       } *>
-      putStrLn("Main") *>
-      ZIO.succeed(ExitCode.success)
+      printLine("Main")).exitCode
 }
 
 object Sharding extends App {
-  import zio.console._
+  import zio.Console._
 
   /**
    * EXERCISE
@@ -75,30 +74,28 @@ object Sharding extends App {
   ): ZIO[R, Nothing, E] = ???
 
   def run(args: List[String]) = {
-    def makeWorker(ref: Ref[Int]): Int => ZIO[Console, String, Unit] =
+    def makeWorker(ref: Ref[Int]): Int => ZIO[Has[Console], String, Unit] =
       (work: Int) =>
         for {
           count <- ref.get
-          _ <- if (count < 100) putStrLn(s"Worker is processing item ${work} after ${count}")
+          _ <- if (count < 100) printLine(s"Worker is processing item ${work} after ${count}").orDie
               else ZIO.fail(s"Uh oh, failed processing ${work} after ${count}")
           _ <- ref.update(_ + 1)
         } yield ()
 
-    for {
+    (for {
       queue <- Queue.bounded[Int](100)
       ref   <- Ref.make(0)
       _     <- queue.offer(1).forever.fork
       error <- shard(queue, 10, makeWorker(ref))
-      _     <- putStrLn(s"Failed with ${error}")
-    } yield ExitCode.success
+      _     <- printLine(s"Failed with ${error}")
+    } yield ()).exitCode
   }
 }
 
 object parallel_web_crawler {
-  import zio.blocking._
-  import zio.console._
-  import zio.duration._
-  import zio.clock._
+  import zio.Console._
+  import zio.Clock._
 
   type Web = Has[Web.Service]
   object Web {
@@ -112,7 +109,7 @@ object parallel_web_crawler {
      * Implement a layer for `Web` that uses the `effectBlockingIO` combinator
      * to safely wrap `Source.fromURL` into a functional effect.
      */
-    val live: ZLayer[Blocking, Nothing, Web] = ???
+    val live: ZLayer[Any, Nothing, Web] = ???
   }
 
   /**
@@ -246,5 +243,5 @@ object parallel_web_crawler {
    * it needs.
    */
   def run(args: List[String]) =
-    putStrLn("Hello World!").exitCode
+    printLine("Hello World!").exitCode
 }

@@ -7,7 +7,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 object SimpleActor extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
 
   sealed trait Command
@@ -37,15 +37,15 @@ object SimpleActor extends App {
             actor(AdjustTemperature(temp))
           }
       temp <- actor(ReadTemperature)
-      _    <- putStrLn(s"Final temperature is ${temp}")
+      _    <- printLine(s"Final temperature is ${temp}")
     } yield ()).exitCode
   }
 }
 
 object Hangman extends App {
   import Dictionary.Dictionary
-  import zio.console._
-  import zio.random._
+  import zio.Console._
+  import zio.Random._
   import java.io.IOException
 
   /**
@@ -54,7 +54,7 @@ object Hangman extends App {
    * Implement an effect that gets a single, lower-case character from
    * the user.
    */
-  lazy val getChoice: ZIO[Console, IOException, Char] = ???
+  lazy val getChoice: ZIO[Has[Console], IOException, Char] = ???
 
   /**
    * EXERCISE
@@ -62,7 +62,7 @@ object Hangman extends App {
    * Implement an effect that prompts the user for their name, and
    * returns it.
    */
-  lazy val getName: ZIO[Console, IOException, String] = ???
+  lazy val getName: ZIO[Has[Console], IOException, String] = ???
 
   /**
    * EXERCISE
@@ -70,7 +70,7 @@ object Hangman extends App {
    * Implement an effect that chooses a random word from the dictionary.
    * The dictionary is `Dictionary.Dictionary`.
    */
-  lazy val chooseWord: ZIO[Random, Nothing, String] = ???
+  lazy val chooseWord: ZIO[Has[Random], Nothing, String] = ???
 
   /**
    * EXERCISE
@@ -78,9 +78,9 @@ object Hangman extends App {
    * Implement the main game loop, which gets choices from the user until
    * the game is won or lost.
    */
-  def gameLoop(oldState: State): ZIO[Console, IOException, Unit] = ???
+  def gameLoop(oldState: State): ZIO[Has[Console], IOException, Unit] = ???
 
-  def renderState(state: State): ZIO[Console, Nothing, Unit] = {
+  def renderState(state: State): ZIO[Has[Console], IOException, Unit] = {
 
     /**
      *
@@ -101,7 +101,7 @@ object Hangman extends App {
 
     val text = word + "\n" + line + "\n\n" + guesses + "\n"
 
-    putStrLn(text)
+    printLine(text)
   }
 
   final case class State(name: String, guesses: Set[Char], word: String) {
@@ -150,7 +150,7 @@ object Hangman extends App {
 }
 
 object TicTacToe extends App {
-  import zio.console._
+  import zio.Console._
 
   sealed trait Mark {
     final def renderChar: Char = this match {
@@ -271,5 +271,5 @@ object TicTacToe extends App {
    * computer opponent.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    putStrLn(TestBoard).exitCode
+    printLine(TestBoard).exitCode
 }

@@ -1,3 +1,7 @@
 target
 .bloop
 .metals
+null
+project/metals.sbt
+project/project/metals.sbt
+project/project/project/metals.sbt

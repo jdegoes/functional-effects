@@ -3,7 +3,7 @@ package net.degoes.zio
 import zio._
 
 object AccessEnvironment extends App {
-  import zio.console._
+  import zio.Console._
 
   final case class Config(server: String, port: Int)
 
@@ -35,7 +35,7 @@ object AccessEnvironment extends App {
 }
 
 object ProvideEnvironment extends App {
-  import zio.console._
+  import zio.Console._
 
   final case class Config(server: String, port: Int)
 
@@ -65,7 +65,7 @@ object ProvideEnvironment extends App {
 }
 
 object CakeEnvironment extends App {
-  import zio.console._
+  import zio.Console._
   import java.io.IOException
 
   type MyFx = Logging with Files
@@ -169,17 +169,15 @@ object HasMap extends App {
  * ZIO services like `Clock` and `System` are all designed to work well with layers.
  */
 object LayerEnvironment extends App {
-  import zio.console._
+  import zio.Console._
   import java.io.IOException
-  import zio.blocking._
 
-  type MyFx = Logging with Files
+  type MyFx = Has[Logging] with Has[Files]
 
-  type Files = Has[Files.Service]
+  trait Files {
+    def read(file: String): IO[IOException, String]
+  }
   object Files {
-    trait Service {
-      def read(file: String): IO[IOException, String]
-    }
 
     /**
      * EXERCISE
@@ -187,16 +185,15 @@ object LayerEnvironment extends App {
      * Using `ZLayer.succeed`, create a layer that implements the `Files`
      * service.
      */
-    val live: ZLayer[Blocking, Nothing, Files] = ???
+    val live: ZLayer[Any, Nothing, Has[Files]] = ???
 
-    def read(file: String) = ZIO.accessM[Files](_.get.read(file))
+    def read(file: String) = ZIO.serviceWith[Files](_.read(file))
   }
 
-  type Logging = Has[Logging.Service]
+  trait Logging {
+    def log(line: String): UIO[Unit]
+  }
   object Logging {
-    trait Service {
-      def log(line: String): UIO[Unit]
-    }
 
     /**
      * EXERCISE
@@ -204,9 +201,9 @@ object LayerEnvironment extends App {
      * Using `ZLayer.fromFunction`, create a layer that requires `Console`
      * and uses the console to provide a logging service.
      */
-    val live: ZLayer[Console, Nothing, Logging] = ???
+    val live: ZLayer[Has[Console], Nothing, Has[Logging]] = ???
 
-    def log(line: String) = ZIO.accessM[Logging](_.get.log(line))
+    def log(line: String) = ZIO.serviceWith[Logging](_.log(line))
   }
 
   val effect =
@@ -224,7 +221,7 @@ object LayerEnvironment extends App {
      * You will have to build a value (the environment) of the required type
      * (`Files with Logging`).
      */
-    val env: ZLayer[Console, Nothing, Files with Logging] =
+    val env: ZLayer[Has[Console], Nothing, Has[Files] with Has[Logging]] =
       ???
 
     effect

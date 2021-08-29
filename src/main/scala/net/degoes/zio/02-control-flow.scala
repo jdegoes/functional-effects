@@ -5,7 +5,7 @@ import scala.collection.immutable.Nil
 import scala.annotation.tailrec
 
 object Looping extends App {
-  import zio.console._
+  import zio.Console._
 
   /**
    * EXERCISE
@@ -16,12 +16,12 @@ object Looping extends App {
     ???
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    repeat(100)(putStrLn("All work and no play makes Jack a dull boy")).exitCode
+    repeat(100)(printLine("All work and no play makes Jack a dull boy")).exitCode
 }
 
 object Interview extends App {
   import java.io.IOException
-  import zio.console._
+  import zio.Console._
 
   val questions =
     "Where where you born?" ::
@@ -35,7 +35,7 @@ object Interview extends App {
    * Implement the `getAllAnswers` function in such a fashion that it will ask
    * the user each question and collect them all into a list.
    */
-  def getAllAnswers(questions: List[String]): ZIO[Console, IOException, List[String]] =
+  def getAllAnswers(questions: List[String]): ZIO[Has[Console], IOException, List[String]] =
     questions match {
       case Nil     => ???
       case q :: qs => ???
@@ -53,7 +53,7 @@ object Interview extends App {
 
 object InterviewGeneric extends App {
   import java.io.IOException
-  import zio.console._
+  import zio.Console._
 
   val questions =
     "Where where you born?" ::
@@ -77,7 +77,7 @@ object InterviewGeneric extends App {
 }
 
 object InterviewForeach extends App {
-  import zio.console._
+  import zio.Console._
 
   val questions =
     "Where where you born?" ::
@@ -89,8 +89,8 @@ object InterviewForeach extends App {
    * EXERCISE
    *
    * Using `ZIO.foreach`, iterate over each question in `questions`, print the
-   * question to the user (`putStrLn`), read the answer from the user
-   * (`getStrLn`), and collect all answers into a collection. Finally, print
+   * question to the user (`printLine`), read the answer from the user
+   * (`readLine`), and collect all answers into a collection. Finally, print
    * out the contents of the collection.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
@@ -98,7 +98,7 @@ object InterviewForeach extends App {
 }
 
 object WhileLoop extends App {
-  import zio.console._
+  import zio.Console._
 
   /**
    * EXERCISE
@@ -113,7 +113,7 @@ object WhileLoop extends App {
       whileLoop(variable.get.map(_ < 100)) {
         for {
           value <- variable.get
-          _     <- putStrLn(s"At iteration: ${value}")
+          _     <- printLine(s"At iteration: ${value}")
           _     <- variable.update(_ + 1)
         } yield ()
       }
@@ -126,7 +126,7 @@ object WhileLoop extends App {
 }
 
 object Iterate extends App {
-  import zio.console._
+  import zio.Console._
 
   /**
    * EXERCISE
@@ -139,13 +139,11 @@ object Iterate extends App {
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     iterate(0)(_ < 100) { i =>
-      putStrLn(s"At iteration: ${i}").as(i + 1)
+      printLine(s"At iteration: ${i}").as(i + 1)
     }.exitCode
 }
 
 object TailRecursive extends App {
-  import zio.duration._
-
   trait Response
   trait Request {
     def returnResponse(response: Response): Task[Unit]

@@ -3,10 +3,10 @@ package net.degoes.zio
 import zio._
 
 object ForkJoin extends App {
-  import zio.console._
+  import zio.Console._
 
   val printer =
-    putStrLn(".").repeat(Schedule.recurs(10))
+    printLine(".").repeat(Schedule.recurs(10))
 
   /**
    * EXERCISE
@@ -20,11 +20,10 @@ object ForkJoin extends App {
 }
 
 object ForkInterrupt extends App {
-  import zio.console._
-  import zio.duration._
+  import zio.Console._
 
   val infinitePrinter =
-    putStrLn(".").forever
+    printLine(".").forever
 
   /**
    * EXERCISE
@@ -39,7 +38,7 @@ object ForkInterrupt extends App {
 }
 
 object ParallelFib extends App {
-  import zio.console._
+  import zio.Console._
 
   /**
    * EXERCISE
@@ -58,23 +57,22 @@ object ParallelFib extends App {
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    for {
-      _ <- putStrLn(
+    (for {
+      _ <- printLine(
             "What number of the fibonacci sequence should we calculate?"
           )
-      n <- getStrLn.orDie.flatMap(input => ZIO(input.toInt)).eventually
+      n <- readLine.orDie.flatMap(input => ZIO(input.toInt)).eventually
       f <- fib(n)
-      _ <- putStrLn(s"fib(${n}) = ${f}")
-    } yield ExitCode.success
+      _ <- printLine(s"fib(${n}) = ${f}")
+    } yield ()).exitCode
 }
 
 object AlarmAppImproved extends App {
-  import zio.console._
-  import zio.duration._
+  import zio.Console._
   import java.io.IOException
   import java.util.concurrent.TimeUnit
 
-  lazy val getAlarmDuration: ZIO[Console, IOException, Duration] = {
+  lazy val getAlarmDuration: ZIO[Has[Console], IOException, Duration] = {
     def parseDuration(input: String): IO[NumberFormatException, Duration] =
       ZIO
         .effect(
@@ -82,11 +80,11 @@ object AlarmAppImproved extends App {
         )
         .refineToOrDie[NumberFormatException]
 
-    val fallback = putStrLn("You didn't enter a number of seconds!") *> getAlarmDuration
+    val fallback = printLine("You didn't enter a number of seconds!") *> getAlarmDuration
 
     for {
-      _        <- putStrLn("Please enter the number of seconds to sleep: ")
-      input    <- getStrLn
+      _        <- printLine("Please enter the number of seconds to sleep: ")
+      input    <- readLine
       duration <- parseDuration(input) orElse fallback
     } yield duration
   }
@@ -108,10 +106,9 @@ object AlarmAppImproved extends App {
  * using the `Ref` data type, which is like a concurrent version of a Scala `var`.
  */
 object ComputePi extends App {
-  import zio.random._
-  import zio.console._
-  import zio.clock._
-  import zio.duration._
+  import zio.Random._
+  import zio.Console._
+  import zio.Clock._
   import zio.stm._
 
   /**
@@ -139,7 +136,7 @@ object ComputePi extends App {
   /**
    * An effect that computes a random (x, y) point.
    */
-  val randomPoint: ZIO[Random, Nothing, (Double, Double)] =
+  val randomPoint: ZIO[Has[Random], Nothing, (Double, Double)] =
     nextDouble zip nextDouble
 
   /**
@@ -153,7 +150,7 @@ object ComputePi extends App {
 }
 
 object ParallelZip extends App {
-  import zio.console._
+  import zio.Console._
 
   def fib(n: Int): UIO[Int] =
     if (n <= 1) UIO(n)
@@ -169,11 +166,11 @@ object ParallelZip extends App {
    * the result.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (fib(10) zipPar fib(13)).flatMap(t => putStrLn(t.toString)).exitCode
+    (fib(10) zipPar fib(13)).flatMap(t => printLine(t.toString)).exitCode
 }
 
 object StmSwap extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
 
   /**
@@ -209,11 +206,11 @@ object StmSwap extends App {
   def exampleStm: UIO[Int] = ???
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    exampleRef.map(_.toString).flatMap(putStrLn(_)).exitCode
+    exampleRef.map(_.toString).flatMap(printLine(_)).exitCode
 }
 
 object StmLock extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
 
   /**
@@ -231,22 +228,22 @@ object StmLock extends App {
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    for {
+    (for {
       lock <- Lock.make
       fiber1 <- lock.acquire
-                 .bracket_(lock.release)(putStrLn("Bob  : I have the lock!"))
+                 .bracket_(lock.release)(printLine("Bob  : I have the lock!"))
                  .repeat(Schedule.recurs(10))
                  .fork
       fiber2 <- lock.acquire
-                 .bracket_(lock.release)(putStrLn("Sarah: I have the lock!"))
+                 .bracket_(lock.release)(printLine("Sarah: I have the lock!"))
                  .repeat(Schedule.recurs(10))
                  .fork
       _ <- (fiber1 zip fiber2).join
-    } yield ExitCode.success
+    } yield ()).exitCode
 }
 
 object StmQueue extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
   import scala.collection.immutable.{ Queue => ScalaQueue }
 
@@ -264,17 +261,17 @@ object StmQueue extends App {
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    for {
+    (for {
       queue <- Queue.bounded[Int](10)
       _     <- ZIO.foreach(0 to 100)(i => queue.offer(i)).fork
       _ <- ZIO.foreach(0 to 100)(
-            _ => queue.take.flatMap(i => putStrLn(s"Got: ${i}"))
+            _ => queue.take.flatMap(i => printLine(s"Got: ${i}"))
           )
-    } yield ExitCode.success
+    } yield ()).exitCode
 }
 
 object StmLunchTime extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
 
   /**
@@ -354,9 +351,8 @@ object StmLunchTime extends App {
 }
 
 object StmPriorityQueue extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
-  import zio.duration._
 
   /**
    * EXERCISE
@@ -378,7 +374,7 @@ object StmPriorityQueue extends App {
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
-      _     <- putStrLn("Enter any key to exit...")
+      _     <- printLine("Enter any key to exit...")
       queue <- PriorityQueue.make[String].commit
       lowPriority = ZIO.foreach(0 to 100) { i =>
         ZIO.sleep(1.millis) *> queue
@@ -391,15 +387,15 @@ object StmPriorityQueue extends App {
           .commit
       }
       _ <- ZIO.forkAll(List(lowPriority, highPriority)) *> queue.take.commit
-            .flatMap(putStrLn(_))
+            .flatMap(printLine(_))
             .forever
             .fork *>
-            getStrLn
+            readLine
     } yield 0).exitCode
 }
 
 object StmReentrantLock extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
 
   private final case class WriteLock(
@@ -461,8 +457,9 @@ object StmReentrantLock extends App {
 }
 
 object StmDiningPhilosophers extends App {
-  import zio.console._
+  import zio.Console._
   import zio.stm._
+  import java.io.IOException
 
   sealed trait Fork
   val Fork = new Fork {}
@@ -512,7 +509,7 @@ object StmDiningPhilosophers extends App {
   def eat(
     philosopher: Int,
     roundtable: Roundtable
-  ): ZIO[Console, Nothing, Unit] = {
+  ): ZIO[Has[Console], IOException, Unit] = {
     val placement = roundtable.seats(philosopher)
 
     val left  = placement.left
@@ -520,25 +517,25 @@ object StmDiningPhilosophers extends App {
 
     for {
       forks <- takeForks(left, right).commit
-      _     <- putStrLn(s"Philosopher ${philosopher} eating...")
+      _     <- printLine(s"Philosopher ${philosopher} eating...")
       _     <- putForks(left, right)(forks).commit
-      _     <- putStrLn(s"Philosopher ${philosopher} is done eating")
+      _     <- printLine(s"Philosopher ${philosopher} is done eating")
     } yield ()
   }
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
     val count = 10
 
-    def eaters(table: Roundtable): Iterable[ZIO[Console, Nothing, Unit]] =
+    def eaters(table: Roundtable): Iterable[ZIO[Has[Console], IOException, Unit]] =
       (0 to count).map { index =>
         eat(index, table)
       }
 
-    for {
+    (for {
       table <- setupTable(count)
       fiber <- ZIO.forkAll(eaters(table))
       _     <- fiber.join
-      _     <- putStrLn("All philosophers have eaten!")
-    } yield ExitCode.success
+      _     <- printLine("All philosophers have eaten!")
+    } yield ()).exitCode
   }
 }
