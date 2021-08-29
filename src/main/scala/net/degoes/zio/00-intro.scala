@@ -44,13 +44,13 @@ object ZIOModel {
 
     def fail[E](e: => E): ZIO[Any, E, Nothing] = ???
 
-    def effect[A](sideEffect: => A): ZIO[Any, Throwable, A] = ???
+    def attempt[A](sideEffect: => A): ZIO[Any, Throwable, A] = ???
 
     def environment[R]: ZIO[R, Nothing, R] = ???
 
     def access[R, A](f: R => A): ZIO[R, Nothing, A] = ???
 
-    def accessM[R, E, A](f: R => ZIO[R, E, A]): ZIO[R, E, A] = ???
+    def accessZIO[R, E, A](f: R => ZIO[R, E, A]): ZIO[R, E, A] = ???
   }
 
   /**
@@ -76,10 +76,10 @@ object ZIOModel {
   }
 
   def printLine(line: String): ZIO[Any, Nothing, Unit] =
-    ZIO.effect(println(line)).orDie
+    ZIO.attempt(println(line)).orDie
 
   val readLine: ZIO[Any, Nothing, String] =
-    ZIO.effect(scala.io.StdIn.readLine()).orDie
+    ZIO.attempt(scala.io.StdIn.readLine()).orDie
 
   def unsafeRun[A](zio: ZIO[Any, Throwable, A]): A =
     zio.run(()).fold(throw _, a => a)
@@ -113,6 +113,8 @@ object ZIOTypes {
 
 object SuccessEffect extends App {
 
+  val successExitCode = ExitCode.success
+
   /**
    * EXERCISE
    *
@@ -138,7 +140,7 @@ object HelloWorld extends App {
 }
 
 object SimpleMap extends App {
-  import Console.{ printLine, readLine }
+  import Console.readLine
 
   /**
    * EXERCISE
@@ -325,7 +327,7 @@ object SingleSideEffect extends App {
   /**
    * EXERCISE
    *
-   * Using ZIO.effect, convert the side-effecting of `println` into a pure
+   * Using ZIO.attempt, convert the side-effecting of `println` into a pure
    * functional effect.
    */
   def myPrintLn(line: String): Task[Unit] = ???
@@ -337,14 +339,14 @@ object SingleSideEffect extends App {
 object MultipleSideEffects extends App {
 
   /**
-   * Using `ZIO.effect`, wrap Scala's `println` method to lazily convert it
+   * Using `ZIO.attempt`, wrap Scala's `println` method to lazily convert it
    * into a functional effect, which describes the action of printing a line
    * of text to the console, but which does not actually perform the print.
    */
   def printLine(line: String): Task[Unit] = ???
 
   /**
-   * Using `ZIO.effect`, wrap Scala's `scala.io.StdIn.readLine()` method to
+   * Using `ZIO.attempt`, wrap Scala's `scala.io.StdIn.readLine()` method to
    * lazily convert it into a functional effect, which describes the action
    * of printing a line of text to the console, but which does not actually
    * perform the print.

@@ -3,8 +3,6 @@ package net.degoes.zio
 import zio._
 import java.text.NumberFormat
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
 
 object SimpleActor extends App {
   import zio.Console._
@@ -40,6 +38,158 @@ object SimpleActor extends App {
       _    <- printLine(s"Final temperature is ${temp}")
     } yield ()).exitCode
   }
+}
+
+object parallel_web_crawler {
+  import zio.Console._
+  import zio.Clock._
+
+  trait Web {
+    def getURL(url: URL): IO[Exception, String]
+  }
+  object Web {
+
+    /**
+     * EXERCISE
+     *
+     * Implement a layer for `Web` that uses the `ZIO.attemptBlockingIO` combinator
+     * to safely wrap `Source.fromURL` into a functional effect.
+     */
+    val live: ZLayer[Any, Nothing, Web] = ???
+  }
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO.accessM`, delegate to the `Web` module's `getURL` function.
+   */
+  def getURL(url: URL): ZIO[Web, Exception, String] = ???
+
+  final case class CrawlState[+E](visited: Set[URL], errors: List[E]) {
+    final def visitAll(urls: Set[URL]): CrawlState[E] = copy(visited = visited ++ urls)
+
+    final def logError[E1 >: E](e: E1): CrawlState[E1] = copy(errors = e :: errors)
+  }
+
+  /**
+   * EXERCISE
+   *
+   * Implement the `crawl` function using the helpers provided in this object.
+   *
+   * {{{
+   * def getURL(url: URL): ZIO[Blocking, Exception, String]
+   * def extractURLs(root: URL, html: String): List[URL]
+   * }}}
+   */
+  def crawl[E](
+    seeds: Set[URL],
+    router: URL => Set[URL],
+    processor: (URL, String) => IO[E, Unit]
+  ): ZIO[Has[Web] with Has[Clock], Nothing, List[E]] = {
+    val emptySet = ZIO.succeed(Set.empty[URL])
+
+    def loop(seeds: Set[URL], ref: Ref[CrawlState[E]]): ZIO[Has[Web] with Has[Clock], Nothing, Unit] =
+      if (seeds.isEmpty) ZIO.unit
+      else ???
+
+    for {
+      ref   <- Ref.make[CrawlState[E]](CrawlState(seeds, Nil))
+      _     <- loop(seeds, ref)
+      state <- ref.get
+    } yield state.errors
+  }
+
+  /**
+   * A data structure representing a structured URL, with a smart constructor.
+   */
+  final case class URL private (parsed: io.lemonlabs.uri.Url) {
+    import io.lemonlabs.uri._
+
+    final def relative(page: String): Option[URL] =
+      scala.util
+        .Try(parsed.path match {
+          case Path(parts) =>
+            val whole = parts.dropRight(1) :+ page.dropWhile(_ == '/')
+
+            parsed.withPath(UrlPath(whole))
+        })
+        .toOption
+        .map(new URL(_))
+
+    def url: String = parsed.toString
+
+    override def equals(a: Any): Boolean = a match {
+      case that: URL => this.url == that.url
+      case _         => false
+    }
+
+    override def hashCode: Int = url.hashCode
+  }
+
+  object URL {
+    import io.lemonlabs.uri._
+
+    def make(url: String): Option[URL] =
+      scala.util.Try(AbsoluteUrl.parse(url)).toOption match {
+        case None         => None
+        case Some(parsed) => Some(new URL(parsed))
+      }
+  }
+
+  /**
+   * A function that extracts URLs from a given web page.
+   */
+  def extractURLs(root: URL, html: String): List[URL] = {
+    val pattern = "href=[\"\']([^\"\']+)[\"\']".r
+
+    scala.util
+      .Try({
+        val matches = (for (m <- pattern.findAllMatchIn(html)) yield m.group(1)).toList
+
+        for {
+          m   <- matches
+          url <- URL.make(m).toList ++ root.relative(m).toList
+        } yield url
+      })
+      .getOrElse(Nil)
+  }
+
+  object test {
+    val Home          = URL.make("http://zio.dev").get
+    val Index         = URL.make("http://zio.dev/index.html").get
+    val ScaladocIndex = URL.make("http://zio.dev/scaladoc/index.html").get
+    val About         = URL.make("http://zio.dev/about").get
+
+    val SiteIndex =
+      Map(
+        Home          -> """<html><body><a href="index.html">Home</a><a href="/scaladoc/index.html">Scaladocs</a></body></html>""",
+        Index         -> """<html><body><a href="index.html">Home</a><a href="/scaladoc/index.html">Scaladocs</a></body></html>""",
+        ScaladocIndex -> """<html><body><a href="index.html">Home</a><a href="/about">About</a></body></html>""",
+        About         -> """<html><body><a href="home.html">Home</a><a href="http://google.com">Google</a></body></html>"""
+      )
+
+    /**
+     * EXERCISE
+     *
+     * Implement a test layer using the SiteIndex data.
+     */
+    val testLayer: ZLayer[Any, Nothing, Web] = ???
+
+    val TestRouter: URL => Set[URL] =
+      url => if (url.parsed.apexDomain == Some("zio.dev")) Set(url) else Set()
+
+    val Processor: (URL, String) => IO[Unit, List[(URL, String)]] =
+      (url, html) => IO.succeed(List(url -> html))
+  }
+
+  /**
+   * EXERCISE
+   *
+   * Run your test crawler using the test data, supplying it the custom layer
+   * it needs.
+   */
+  def run(args: List[String]) =
+    printLine("Hello World!").exitCode
 }
 
 object Hangman extends App {

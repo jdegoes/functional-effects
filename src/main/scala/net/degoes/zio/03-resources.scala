@@ -50,7 +50,7 @@ object CatEnsuring extends App {
     ZIO.uninterruptible {
       for {
         source   <- open(file)
-        contents <- ZIO.effect(source.getLines().mkString("\n"))
+        contents <- ZIO.attempt(source.getLines().mkString("\n"))
       } yield contents
     }.refineToOrDie[IOException]
 

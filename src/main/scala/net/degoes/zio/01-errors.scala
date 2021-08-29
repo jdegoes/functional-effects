@@ -146,7 +146,7 @@ object ErrorNarrowing extends App {
   import java.io.IOException
   import scala.io.StdIn.readLine
 
-  val broadReadLine: IO[Throwable, String] = ZIO.effect(scala.io.StdIn.readLine())
+  val broadReadLine: IO[Throwable, String] = ZIO.attempt(scala.io.StdIn.readLine())
 
   /**
    * EXERCISE
