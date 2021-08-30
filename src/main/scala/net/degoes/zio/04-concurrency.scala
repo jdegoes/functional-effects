@@ -231,11 +231,11 @@ object StmLock extends App {
     (for {
       lock <- Lock.make
       fiber1 <- lock.acquire
-                 .bracket_(lock.release)(printLine("Bob  : I have the lock!"))
+                 .acquireRelease(lock.release)(printLine("Bob  : I have the lock!"))
                  .repeat(Schedule.recurs(10))
                  .fork
       fiber2 <- lock.acquire
-                 .bracket_(lock.release)(printLine("Sarah: I have the lock!"))
+                 .acquireRelease(lock.release)(printLine("Sarah: I have the lock!"))
                  .repeat(Schedule.recurs(10))
                  .fork
       _ <- (fiber1 zip fiber2).join

@@ -10,9 +10,9 @@ object welcome {
   //
   // REPOSITORY: https://github.com/jdegoes/functional-effects
   //
-  // Daily Schedule:
+  // Daily Schedule (ET):
   //
   //    START : 11:00 AM
-  //    LUNCH :  2:00 PM
-  //    END   :  7:00 PM
+  //    LUNCH : 12:45 PM
+  //    END   :  3:00 PM
 }

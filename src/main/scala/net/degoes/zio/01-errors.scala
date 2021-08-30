@@ -31,7 +31,7 @@ object ErrorConstructor extends App {
   val failed: ZIO[Any, String, Nothing] = ???
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    failed.foldM(printLine(_), printLine(_)).exitCode
+    failed.foldZIO(printLine(_), printLine(_)).exitCode
 }
 
 object ErrorRecoveryOrElse extends App {
@@ -97,7 +97,7 @@ object ErrorRecoveryCatchAll extends App {
     ???
 }
 
-object ErrorRecoveryFoldM extends App {
+object ErrorRecoveryFoldZIO extends App {
   import zio.Console._
 
   val failed: ZIO[Any, String, String] = ZIO.fail("Uh oh!")
@@ -105,7 +105,7 @@ object ErrorRecoveryFoldM extends App {
   /**
    * EXERCISE
    *
-   * Using `ZIO#foldM`, print out the success or failure value of `failed`
+   * Using `ZIO#foldZIO`, print out the success or failure value of `failed`
    * by using `printLine`.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =

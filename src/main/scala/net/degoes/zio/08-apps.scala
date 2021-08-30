@@ -63,7 +63,7 @@ object parallel_web_crawler {
    *
    * Using `ZIO.accessM`, delegate to the `Web` module's `getURL` function.
    */
-  def getURL(url: URL): ZIO[Web, Exception, String] = ???
+  def getURL(url: URL): ZIO[Has[Web], Exception, String] = ???
 
   final case class CrawlState[+E](visited: Set[URL], errors: List[E]) {
     final def visitAll(urls: Set[URL]): CrawlState[E] = copy(visited = visited ++ urls)
@@ -289,14 +289,15 @@ object Hangman extends App {
    *
    * Execute the main function and verify your program works as intended.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+    for {
       name  <- getName
       word  <- chooseWord
       state = State(name, Set(), word)
       _     <- renderState(state)
       _     <- gameLoop(state)
-    } yield ()).exitCode
+    } yield ()
+  }.exitCode
 }
 
 object TicTacToe extends App {

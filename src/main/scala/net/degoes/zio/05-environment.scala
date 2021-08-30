@@ -112,7 +112,7 @@ object CakeEnvironment extends App {
  * Although there are no requirements on how the ZIO environment may be used to pass context
  * around in an application, for easier composition, ZIO includes a data type called `Has`,
  * which represents a map from a type to an object that satisfies that type. Sometimes, this is
- * called a "Has Map" or more imprecisely, a "type-level map".
+ * called a "Has Map" or more precisely, a "type-indexed map".
  */
 object HasMap extends App {
   trait Logging
@@ -177,7 +177,7 @@ object LayerEnvironment extends App {
   trait Files {
     def read(file: String): IO[IOException, String]
   }
-  object Files {
+  object Files extends Accessible[Files] {
 
     /**
      * EXERCISE
@@ -187,13 +187,13 @@ object LayerEnvironment extends App {
      */
     val live: ZLayer[Any, Nothing, Has[Files]] = ???
 
-    def read(file: String) = ZIO.serviceWith[Files](_.read(file))
+    def read(file: String) = Files(_.read(file))
   }
 
   trait Logging {
     def log(line: String): UIO[Unit]
   }
-  object Logging {
+  object Logging extends Accessible[Logging] {
 
     /**
      * EXERCISE
@@ -203,23 +203,27 @@ object LayerEnvironment extends App {
      */
     val live: ZLayer[Has[Console], Nothing, Has[Logging]] = ???
 
-    def log(line: String) = ZIO.serviceWith[Logging](_.log(line))
+    def log(line: String) = Logging(_.log(line))
   }
 
+  /**
+   * EXERCISE
+   *
+   * Discover the inferred type of `effect`, and write it out explicitly.
+   */
   val effect =
-    (for {
+    for {
       file <- Files.read("build.sbt")
       _    <- Logging.log(file)
-    } yield ())
+    } yield ()
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
 
     /**
      * EXERCISE
      *
-     * Run `effect` by using `ZIO#provideCustomLayer` to give it what it needs.
-     * You will have to build a value (the environment) of the required type
-     * (`Files with Logging`).
+     * Run `effect` by using `ZIO#inject` to give it what it needs. You will have
+     * to give it a list of services that implement its required dependencies.
      */
     val env: ZLayer[Has[Console], Nothing, Has[Files] with Has[Logging]] =
       ???

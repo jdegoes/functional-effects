@@ -294,13 +294,14 @@ object ForComprehensionBackward extends App {
    * comprehension will translate to a `flatMap`, except the final line,
    * which will translate to a `map`.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+    for {
       _   <- printLine("How old are you?")
       age <- readInt
       _ <- if (age < 18) printLine("You are a kid!")
           else printLine("You are all grown up!")
-    } yield ()).exitCode
+    } yield ()
+  }.exitCode
 }
 
 object NumberGuesser extends App {
@@ -353,10 +354,11 @@ object MultipleSideEffects extends App {
    */
   val readLine: Task[String] = ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+    for {
       _    <- printLine("Hello, what is your name?")
       name <- readLine
       _    <- printLine(s"Good to meet you, ${name}!")
-    } yield ()).exitCode
+    } yield ()
+  }.exitCode
 }

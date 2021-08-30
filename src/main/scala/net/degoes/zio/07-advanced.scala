@@ -55,6 +55,29 @@ object PoolLocking extends App {
       printLine("Main")).exitCode
 }
 
+object PlatformTweaking {
+  import Console._
+  import zio.internal.Platform
+
+  /**
+   * EXERCISE
+   *
+   * Modify the default platform by specifying a custom behavior for logging errors.
+   */
+  lazy val platform = Platform.default.copy(reportFailure = ???)
+
+  val environment = Runtime.default.environment
+
+  /**
+   * EXERCISE
+   *
+   * Create a custom runtime using `platform` and `environment`, and use this to
+   * run an effect.
+   */
+  lazy val customRuntime: Runtime[ZEnv] = ???
+  def exampleRun                        = customRuntime.unsafeRun(printLine("Test effect"))
+}
+
 object Sharding extends App {
   import zio.Console._
 

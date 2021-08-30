@@ -64,7 +64,7 @@ object CatEnsuring extends App {
     } yield ()).exitCode
 }
 
-object CatBracket extends App {
+object CatAcquireRelease extends App {
   import zio.Console._
   import java.io.IOException
   import scala.io.Source
@@ -78,20 +78,21 @@ object CatBracket extends App {
   /**
    * EXERCISE
    *
-   * Using `ZIO#bracket`, implement a safe version of `readFile` that cannot
-   * fail to close the file, no matter what happens during reading.
+   * Using `ZIO#acquireRelease`, implement a safe version of `readFile` that
+   * cannot fail to close the file, no matter what happens during reading.
    */
   def readFile(file: String): ZIO[Any, IOException, String] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
+  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+    for {
       fileName <- ZIO
                    .fromOption(args.headOption)
                    .tapError(_ => printLine("You must specify a file name on the command line"))
       contents <- readFile(fileName)
       _        <- printLine(contents)
-    } yield ()).exitCode
+    } yield ()
+  }.exitCode
 }
 
 object SourceManaged extends App {
@@ -187,9 +188,9 @@ object CatIncremental extends App {
   /**
    * EXERCISE
    *
-   * Implement an incremental version of the `cat` utility, using `ZIO#bracket`
-   * or `ZManaged` to ensure the file is closed in the event of error or
-   * interruption.
+   * Implement an incremental version of the `cat` utility, using
+   * `ZIO#acquireRelease` or `ZManaged` to ensure the file is closed in the
+   * event of error or interruption.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (args match {

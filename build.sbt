@@ -9,7 +9,6 @@ lazy val root = project
     initialCommands in Compile in console :=
       """|import zio._
          |import zio.Console._
-         |import zio.duration._
          |implicit class RunSyntax[E, A](io: ZIO[ZEnv, E, A]){ def unsafeRun: A = Runtime.default.unsafeRun(io) }
     """.stripMargin
   )
