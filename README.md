@@ -42,12 +42,12 @@ Good working knowledge of Scala, including familiarity with immutable data, patt
 2. Clone the repository.
 
     ```bash
-    git clone https://github.com/jdegoes/zio-intro-game
+    git clone https://github.com/jdegoes/functional-effects
     ```
 5. Launch project provided `sbt`.
 
     ```bash
-    cd zio-intro-game; ./sbt
+    cd functional-effects; ./sbt
     ```
 6. Enter continuous compilation mode.
 
