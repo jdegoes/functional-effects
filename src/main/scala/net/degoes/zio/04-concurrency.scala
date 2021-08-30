@@ -166,7 +166,7 @@ object ParallelZip extends App {
    * the result.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (fib(10) zipPar fib(13)).flatMap(t => printLine(t.toString)).exitCode
+    ???
 }
 
 object StmSwap extends App {
