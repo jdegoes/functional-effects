@@ -218,6 +218,19 @@ object LayerEnvironment extends App {
     } yield ()
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+    /**
+      * EXERCISE 
+      * 
+      * Create a layer using `ZLayer.wire` and specifying all the pieces that go into the layer.
+      */
+    val fullLayer: ZLayer[Any, Nothing, Has[Files] with Has[Logging]] = ??? // ZLayer.wire[Has[Files] with Has[Logging]](???)
+
+    /**
+      * EXERCISE
+      * 
+      * Using `ZIO#inject`, inject the full layer into the effect to remove its dependencies.
+      */
+    val effect2: ZIO[Any,IOException,Unit] = ???
 
     /**
      * EXERCISE
@@ -225,11 +238,9 @@ object LayerEnvironment extends App {
      * Run `effect` by using `ZIO#inject` to give it what it needs. You will have
      * to give it a list of services that implement its required dependencies.
      */
-    val env: ZLayer[Has[Console], Nothing, Has[Files] with Has[Logging]] =
-      ???
-
-    effect
-      .provideCustomLayer(env)
-      .exitCode
+    // effect
+    //   .inject(???)
+    //   .exitCode
+    ???
   }
 }
