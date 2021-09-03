@@ -43,11 +43,11 @@ object ProvideEnvironment extends App {
     def query(query: String): Task[Int] = Task(42)
   }
 
-  val getServer: ZIO[Config, Nothing, String] =
-    ZIO.access[Config](_.server)
+  val getServer: ZIO[Has[Config], Nothing, String] =
+    ZIO.service[Config].map(_.server)
 
-  val useDatabaseConnection: ZIO[DatabaseConnection, Throwable, Int] =
-    ZIO.accessM[DatabaseConnection](_.query("SELECT * FROM USERS"))
+  val useDatabaseConnection: ZIO[Has[DatabaseConnection], Throwable, Int] =
+    ZIO.serviceWith[DatabaseConnection](_.query("SELECT * FROM USERS"))
 
   /**
    * EXERCISE
