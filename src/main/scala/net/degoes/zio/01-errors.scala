@@ -18,7 +18,7 @@ import zio._
  * rich underlying model of errors that ZIO uses internally.
  */
 
-object ErrorConstructor extends App {
+object ErrorConstructor extends ZIOAppDefault {
   import zio.Console._
 
   /**
@@ -30,11 +30,11 @@ object ErrorConstructor extends App {
    */
   val failed: ZIO[Any, String, Nothing] = ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    failed.foldZIO(printLine(_), printLine(_)).exitCode
+  val run =
+    failed.foldZIO(printLine(_), printLine(_))
 }
 
-object ErrorRecoveryOrElse extends App {
+object ErrorRecoveryOrElse extends ZIOAppDefault {
   import zio.Console._
 
   val failed = ZIO.fail("Uh oh!")
@@ -45,11 +45,11 @@ object ErrorRecoveryOrElse extends App {
    * Using `ZIO#orElse` have the `run` function compose the preceding `failed`
    * effect with another effect that succeeds with a success exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorShortCircuit extends App {
+object ErrorShortCircuit extends ZIOAppDefault {
   import zio.Console._
 
   val failed =
@@ -63,11 +63,11 @@ object ErrorShortCircuit extends App {
    * Using `ZIO#orElse`, compose the `failed` effect with another effect that
    * succeeds with an exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorRecoveryFold extends App {
+object ErrorRecoveryFold extends ZIOAppDefault {
   import zio.Console._
 
   val failed = ZIO.fail("Uh oh!")
@@ -78,11 +78,11 @@ object ErrorRecoveryFold extends App {
    * Using `ZIO#fold`, map both failure and success values of `failed` into
    * exit codes.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorRecoveryCatchAll extends App {
+object ErrorRecoveryCatchAll extends ZIOAppDefault {
   import zio.Console._
 
   val failed = ZIO.fail("Uh oh!")
@@ -93,11 +93,11 @@ object ErrorRecoveryCatchAll extends App {
    * Using `ZIO#catchAll`, catch all errors in `failed` and print them out to
    * the console using `printLine`.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorRecoveryFoldZIO extends App {
+object ErrorRecoveryFoldZIO extends ZIOAppDefault {
   import zio.Console._
 
   val failed: ZIO[Any, String, String] = ZIO.fail("Uh oh!")
@@ -108,11 +108,11 @@ object ErrorRecoveryFoldZIO extends App {
    * Using `ZIO#foldZIO`, print out the success or failure value of `failed`
    * by using `printLine`.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorRecoveryEither extends App {
+object ErrorRecoveryEither extends ZIOAppDefault {
   import zio.Console._
 
   val failed: ZIO[Any, String, Int] = ZIO.fail("Uh oh!")
@@ -123,11 +123,11 @@ object ErrorRecoveryEither extends App {
    * Using `ZIO#either`, surface the error of `failed` into the success
    * channel, and then map the `Either[String, Int]` into an exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorRecoveryIgnore extends App {
+object ErrorRecoveryIgnore extends ZIOAppDefault {
   import zio.Console._
 
   val failed: ZIO[Any, String, Int] = ZIO.fail("Uh oh!")
@@ -138,11 +138,11 @@ object ErrorRecoveryIgnore extends App {
    * Using `ZIO#ignore`, simply ignore the failure of `failed`, and then map
    * the resulting unit into a successful exit code.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ErrorNarrowing extends App {
+object ErrorNarrowing extends ZIOAppDefault {
   import java.io.IOException
   import scala.io.StdIn.readLine
 
@@ -156,17 +156,17 @@ object ErrorNarrowing extends App {
    */
   val myReadLine: IO[IOException, String] = ???
 
-  def myPrintLn(line: String): UIO[Unit] = UIO(println(line))
+  def myPrintLn(line: String): UIO[Unit] = ZIO.succeed(println(line))
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     (for {
       _    <- myPrintLn("What is your name?")
       name <- myReadLine
       _    <- myPrintLn(s"Good to meet you, ${name}")
-    } yield ()).exitCode
+    } yield ())
 }
 
-object AlarmApp extends App {
+object AlarmApp extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
   import java.util.concurrent.TimeUnit
@@ -178,11 +178,11 @@ object AlarmApp extends App {
    * the user to enter a decimal number of seconds. Use `refineToOrDie` to
    * narrow the error type as necessary.
    */
-  lazy val getAlarmDuration: ZIO[Has[Console], IOException, Duration] = {
+  lazy val getAlarmDuration: ZIO[Any, IOException, Duration] = {
     def parseDuration(input: String): IO[NumberFormatException, Duration] =
       ???
 
-    def fallback(input: String): ZIO[Has[Console], IOException, Duration] =
+    def fallback(input: String): ZIO[Any, IOException, Duration] =
       ???
 
     for {
@@ -199,11 +199,11 @@ object AlarmApp extends App {
    * sleeps the specified number of seconds using `ZIO.sleep(d)`, and then
    * prints out a wakeup alarm message, like "Time to wakeup!!!".
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object SequentialCause extends App {
+object SequentialCause extends ZIOAppDefault {
   import zio.Console._
 
   val failed1 = Cause.fail("Uh oh 1")
@@ -222,11 +222,11 @@ object SequentialCause extends App {
    *
    * Using `Cause.prettyPrint`, dump out `composed` to the console.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ParalellCause extends App {
+object ParalellCause extends ZIOAppDefault {
   import zio.Console._
 
   val failed1 = Cause.fail("Uh oh 1")
@@ -245,11 +245,11 @@ object ParalellCause extends App {
    *
    * Using `Cause.prettyPrint`, dump out `composed` to the console.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object Sandbox extends App {
+object Sandbox extends ZIOAppDefault {
   import zio.Console._
 
   val failed1    = ZIO.fail("Uh oh 1")
@@ -267,6 +267,6 @@ object Sandbox extends App {
    * Using `ZIO#sandbox`, sandbox the `composed` effect and print out the
    * resulting `Cause` value to the console using `printLine`.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }

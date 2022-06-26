@@ -4,7 +4,7 @@ import zio._
 import java.text.NumberFormat
 import java.nio.charset.StandardCharsets
 
-object SimpleActor extends App {
+object SimpleActor extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
 
@@ -26,7 +26,7 @@ object SimpleActor extends App {
     ???
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+  val run = {
     val temperatures = (0 to 100).map(_.toDouble)
 
     (for {
@@ -36,7 +36,7 @@ object SimpleActor extends App {
           }
       temp <- actor(ReadTemperature)
       _    <- printLine(s"Final temperature is ${temp}")
-    } yield ()).exitCode
+    } yield ())
   }
 }
 
@@ -63,7 +63,7 @@ object parallel_web_crawler {
    *
    * Using `ZIO.accessM`, delegate to the `Web` module's `getURL` function.
    */
-  def getURL(url: URL): ZIO[Has[Web], Exception, String] = ???
+  def getURL(url: URL): ZIO[Web, Exception, String] = ???
 
   final case class CrawlState[+E](visited: Set[URL], errors: List[E]) {
     final def visitAll(urls: Set[URL]): CrawlState[E] = copy(visited = visited ++ urls)
@@ -85,10 +85,10 @@ object parallel_web_crawler {
     seeds: Set[URL],
     router: URL => Set[URL],
     processor: (URL, String) => IO[E, Unit]
-  ): ZIO[Has[Web] with Has[Clock], Nothing, List[E]] = {
+  ): ZIO[Web with Clock, Nothing, List[E]] = {
     val emptySet = ZIO.succeed(Set.empty[URL])
 
-    def loop(seeds: Set[URL], ref: Ref[CrawlState[E]]): ZIO[Has[Web] with Has[Clock], Nothing, Unit] =
+    def loop(seeds: Set[URL], ref: Ref[CrawlState[E]]): ZIO[Web with Clock, Nothing, Unit] =
       if (seeds.isEmpty) ZIO.unit
       else ???
 
@@ -106,14 +106,13 @@ object parallel_web_crawler {
     import io.lemonlabs.uri._
 
     final def relative(page: String): Option[URL] =
-      scala.util
-        .Try(parsed.path match {
-          case Path(parts) =>
-            val whole = parts.dropRight(1) :+ page.dropWhile(_ == '/')
+      scala.util.Try {
+        val parts = parsed.path.parts
 
-            parsed.withPath(UrlPath(whole))
-        })
-        .toOption
+        val whole = parts.dropRight(1) :+ page.dropWhile(_ == '/')
+
+        parsed.withPath(UrlPath(whole))
+      }.toOption
         .map(new URL(_))
 
     def url: String = parsed.toString
@@ -179,7 +178,7 @@ object parallel_web_crawler {
       url => if (url.parsed.apexDomain == Some("zio.dev")) Set(url) else Set()
 
     val Processor: (URL, String) => IO[Unit, List[(URL, String)]] =
-      (url, html) => IO.succeed(List(url -> html))
+      (url, html) => ZIO.succeed(List(url -> html))
   }
 
   /**
@@ -188,11 +187,11 @@ object parallel_web_crawler {
    * Run your test crawler using the test data, supplying it the custom layer
    * it needs.
    */
-  def run(args: List[String]) =
-    printLine("Hello World!").exitCode
+  val run =
+    printLine("Hello World!")
 }
 
-object Hangman extends App {
+object Hangman extends ZIOAppDefault {
   import Dictionary.Dictionary
   import zio.Console._
   import zio.Random._
@@ -204,7 +203,7 @@ object Hangman extends App {
    * Implement an effect that gets a single, lower-case character from
    * the user.
    */
-  lazy val getChoice: ZIO[Has[Console], IOException, Char] = ???
+  lazy val getChoice: ZIO[Any, IOException, Char] = ???
 
   /**
    * EXERCISE
@@ -212,7 +211,7 @@ object Hangman extends App {
    * Implement an effect that prompts the user for their name, and
    * returns it.
    */
-  lazy val getName: ZIO[Has[Console], IOException, String] = ???
+  lazy val getName: ZIO[Any, IOException, String] = ???
 
   /**
    * EXERCISE
@@ -220,7 +219,7 @@ object Hangman extends App {
    * Implement an effect that chooses a random word from the dictionary.
    * The dictionary is `Dictionary.Dictionary`.
    */
-  lazy val chooseWord: ZIO[Has[Random], Nothing, String] = ???
+  lazy val chooseWord: ZIO[Any, Nothing, String] = ???
 
   /**
    * EXERCISE
@@ -228,9 +227,9 @@ object Hangman extends App {
    * Implement the main game loop, which gets choices from the user until
    * the game is won or lost.
    */
-  def gameLoop(oldState: State): ZIO[Has[Console], IOException, Unit] = ???
+  def gameLoop(oldState: State): ZIO[Any, IOException, Unit] = ???
 
-  def renderState(state: State): ZIO[Has[Console], IOException, Unit] = {
+  def renderState(state: State): ZIO[Any, IOException, Unit] = {
 
     /**
      *
@@ -289,7 +288,7 @@ object Hangman extends App {
    *
    * Execute the main function and verify your program works as intended.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+  val run = {
     for {
       name  <- getName
       word  <- chooseWord
@@ -297,10 +296,10 @@ object Hangman extends App {
       _     <- renderState(state)
       _     <- gameLoop(state)
     } yield ()
-  }.exitCode
+  }
 }
 
-object TicTacToe extends App {
+object TicTacToe extends ZIOAppDefault {
   import zio.Console._
 
   sealed trait Mark {
@@ -421,6 +420,6 @@ object TicTacToe extends App {
    * Implement a game of tic-tac-toe, where the player gets to play against a
    * computer opponent.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    printLine(TestBoard).exitCode
+  val run =
+    printLine(TestBoard)
 }

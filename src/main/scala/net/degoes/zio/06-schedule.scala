@@ -57,7 +57,7 @@ object Retry {
    *
    * Using `ZIO#retry`, retry the following error a total of five times.
    */
-  val error1   = IO.fail("Uh oh!")
+  val error1   = ZIO.fail("Uh oh!")
   val retried5 = ???
 
   /**
@@ -129,5 +129,5 @@ object Retry {
    */
   import zio.Random
   import Schedule.{ collectAll, exponential, fixed, recurs }
-  def mySchedule[A]: Schedule[ZEnv, A, List[A]] = ???
+  def mySchedule[A]: Schedule[Any, A, List[A]] = ???
 }

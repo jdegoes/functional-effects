@@ -1,13 +1,13 @@
 package net.degoes.zio
 
 import zio._
-import zio.internal.Executor
+import zio.Executor
 import scala.concurrent.ExecutionContext
 
-object PoolLocking extends App {
+object PoolLocking extends ZIOAppDefault {
   import zio.Console._
 
-  lazy val dbPool: Executor = Executor.fromExecutionContext(1024)(ExecutionContext.global)
+  lazy val dbPool: Executor = Executor.fromExecutionContext(ExecutionContext.global)
 
   /**
    * EXERCISE
@@ -43,7 +43,7 @@ object PoolLocking extends App {
    * Use the `threadLogged` combinator around different effects below to
    * determine which threads are executing which effects.
    */
-  def run(args: List[String]) =
+  val run =
     (printLine("Main") *>
       onDatabase {
         printLine("Database") *>
@@ -52,33 +52,33 @@ object PoolLocking extends App {
           } *>
           printLine("Database")
       } *>
-      printLine("Main")).exitCode
+      printLine("Main"))
 }
 
 object PlatformTweaking {
-  import Console._
-  import zio.internal.Platform
+  // import Console._
+  // import zio.internal.Platform
 
-  /**
-   * EXERCISE
-   *
-   * Modify the default platform by specifying a custom behavior for logging errors.
-   */
-  lazy val platform = Platform.default.copy(reportFailure = ???)
+  // /**
+  //  * EXERCISE
+  //  *
+  //  * Modify the default platform by specifying a custom behavior for logging errors.
+  //  */
+  // lazy val platform = Platform.default.copy(reportFailure = ???)
 
-  val environment = Runtime.default.environment
+  // val environment = Runtime.default.environment
 
-  /**
-   * EXERCISE
-   *
-   * Create a custom runtime using `platform` and `environment`, and use this to
-   * run an effect.
-   */
-  lazy val customRuntime: Runtime[ZEnv] = ???
-  def exampleRun                        = customRuntime.unsafeRun(printLine("Test effect"))
+  // /**
+  //  * EXERCISE
+  //  *
+  //  * Create a custom runtime using `platform` and `environment`, and use this to
+  //  * run an effect.
+  //  */
+  // lazy val customRuntime: Runtime[Any] = ???
+  // def exampleRun                        = customRuntime.unsafeRun(printLine("Test effect"))
 }
 
-object Sharding extends App {
+object Sharding extends ZIOAppDefault {
   import zio.Console._
 
   /**
@@ -96,8 +96,8 @@ object Sharding extends App {
     worker: A => ZIO[R, E, Unit]
   ): ZIO[R, Nothing, E] = ???
 
-  def run(args: List[String]) = {
-    def makeWorker(ref: Ref[Int]): Int => ZIO[Has[Console], String, Unit] =
+  val run = {
+    def makeWorker(ref: Ref[Int]): Int => ZIO[Any, String, Unit] =
       (work: Int) =>
         for {
           count <- ref.get
@@ -112,6 +112,6 @@ object Sharding extends App {
       _     <- queue.offer(1).forever.fork
       error <- shard(queue, 10, makeWorker(ref))
       _     <- printLine(s"Failed with ${error}")
-    } yield ()).exitCode
+    } yield ())
   }
 }

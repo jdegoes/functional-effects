@@ -2,7 +2,7 @@ package net.degoes.zio
 
 import zio._
 
-object AccessEnvironment extends App {
+object AccessEnvironment extends ZIOAppDefault {
   import zio.Console._
 
   final case class Config(server: String, port: Int)
@@ -23,31 +23,31 @@ object AccessEnvironment extends App {
    */
   val accessPort: ZIO[Config, Nothing, Int] = ???
 
-  def run(args: List[String]) = {
-    val config = Config("localhost", 7878)
+  val run = {
+    val config = ZLayer.succeed(Config("localhost", 7878))
 
     (for {
       server <- accessServer
       port   <- accessPort
-      _      <- UIO(println(s"Configuration: ${server}:${port}"))
+      _      <- ZIO.succeed(println(s"Configuration: ${server}:${port}"))
     } yield ExitCode.success).provide(config)
   }
 }
 
-object ProvideEnvironment extends App {
+object ProvideEnvironment extends ZIOAppDefault {
   import zio.Console._
 
   final case class Config(server: String, port: Int)
 
   final case class DatabaseConnection() {
-    def query(query: String): Task[Int] = Task(42)
+    def query(query: String): Task[Int] = ZIO.attempt(42)
   }
 
-  val getServer: ZIO[Has[Config], Nothing, String] =
+  val getServer: ZIO[Config, Nothing, String] =
     ZIO.service[Config].map(_.server)
 
-  val useDatabaseConnection: ZIO[Has[DatabaseConnection], Throwable, Int] =
-    ZIO.serviceWith[DatabaseConnection](_.query("SELECT * FROM USERS"))
+  val useDatabaseConnection: ZIO[DatabaseConnection, Throwable, Int] =
+    ZIO.serviceWithZIO[DatabaseConnection](_.query("SELECT * FROM USERS"))
 
   /**
    * EXERCISE
@@ -57,14 +57,14 @@ object ProvideEnvironment extends App {
    * give them the environment that they need in order to run, then they can
    * be composed because their environment types will be compatible.
    */
-  def run(args: List[String]) = {
+  val run = {
     val config = Config("localhost", 7878)
 
     ???
   }
 }
 
-object CakeEnvironment extends App {
+object CakeEnvironment extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
 
@@ -77,7 +77,7 @@ object CakeEnvironment extends App {
     trait Service {
       def log(line: String): UIO[Unit]
     }
-    def log(line: String) = ZIO.accessM[Logging](_.logging.log(line))
+    def log(line: String) = ZIO.serviceWithZIO[Logging](_.logging.log(line))
   }
   trait Files {
     val files: Files.Service
@@ -86,7 +86,7 @@ object CakeEnvironment extends App {
     trait Service {
       def read(file: String): IO[IOException, String]
     }
-    def read(file: String) = ZIO.accessM[Files](_.files.read(file))
+    def read(file: String) = ZIO.serviceWithZIO[Files](_.files.read(file))
   }
 
   val effect =
@@ -102,10 +102,9 @@ object CakeEnvironment extends App {
    * have to build a value (the environment) of the required type
    * (`Files with Logging`).
    */
-  def run(args: List[String]) =
-    effect
-      .provide(???)
-      .exitCode
+  val run =
+    ???
+
 }
 
 /**
@@ -114,7 +113,7 @@ object CakeEnvironment extends App {
  * which represents a map from a type to an object that satisfies that type. Sometimes, this is
  * called a "Has Map" or more precisely, a "type-indexed map".
  */
-object HasMap extends App {
+object HasMap extends ZIOAppDefault {
   trait Logging
   object Logging extends Logging
 
@@ -124,11 +123,11 @@ object HasMap extends App {
   trait Cache
   object Cache extends Cache
 
-  val hasLogging = Has(Logging: Logging)
+  val hasLogging = ZEnvironment(Logging: Logging)
 
-  val hasDatabase = Has(Database: Database)
+  val hasDatabase = ZEnvironment(Database: Database)
 
-  val hasCache = Has(Cache: Cache)
+  val hasCache = ZEnvironment(Cache: Cache)
 
   /**
    * EXERCISE
@@ -136,7 +135,7 @@ object HasMap extends App {
    * Using the `++` operator on `Has`, combine the three maps (`hasLogging`, `hasDatabase`, and
    * `hasCache`) into a single map that has all three objects.
    */
-  val allThree: Has[Database] with Has[Cache] with Has[Logging] = ???
+  val allThree: Database with Cache with Logging = ???
 
   /**
    * EXERCISE
@@ -150,7 +149,7 @@ object HasMap extends App {
   lazy val database = ???
   lazy val cache    = ???
 
-  def run(args: List[String]) = ???
+  val run = ???
 }
 
 /**
@@ -168,16 +167,16 @@ object HasMap extends App {
  *
  * ZIO services like `Clock` and `System` are all designed to work well with layers.
  */
-object LayerEnvironment extends App {
+object LayerEnvironment extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
 
-  type MyFx = Has[Logging] with Has[Files]
+  type MyFx = Logging with Files
 
   trait Files {
     def read(file: String): IO[IOException, String]
   }
-  object Files extends Accessible[Files] {
+  object Files {
 
     /**
      * EXERCISE
@@ -185,15 +184,15 @@ object LayerEnvironment extends App {
      * Using `ZLayer.succeed`, create a layer that implements the `Files`
      * service.
      */
-    val live: ZLayer[Any, Nothing, Has[Files]] = ???
+    val live: ZLayer[Any, Nothing, Files] = ???
 
-    def read(file: String) = Files(_.read(file))
+    def read(file: String) = ZIO.serviceWithZIO[Files](_.read(file))
   }
 
   trait Logging {
     def log(line: String): UIO[Unit]
   }
-  object Logging extends Accessible[Logging] {
+  object Logging {
 
     /**
      * EXERCISE
@@ -201,9 +200,9 @@ object LayerEnvironment extends App {
      * Using `ZLayer.fromFunction`, create a layer that requires `Console`
      * and uses the console to provide a logging service.
      */
-    val live: ZLayer[Has[Console], Nothing, Has[Logging]] = ???
+    val live: ZLayer[Console, Nothing, Logging] = ???
 
-    def log(line: String) = Logging(_.log(line))
+    def log(line: String) = ZIO.serviceWithZIO[Logging](_.log(line))
   }
 
   /**
@@ -217,20 +216,21 @@ object LayerEnvironment extends App {
       _    <- Logging.log(file)
     } yield ()
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
-    /**
-      * EXERCISE 
-      * 
-      * Create a layer using `ZLayer.wire` and specifying all the pieces that go into the layer.
-      */
-    val fullLayer: ZLayer[Any, Nothing, Has[Files] with Has[Logging]] = ??? // ZLayer.wire[Has[Files] with Has[Logging]](???)
+  val run = {
 
     /**
-      * EXERCISE
-      * 
-      * Using `ZIO#inject`, inject the full layer into the effect to remove its dependencies.
-      */
-    val effect2: ZIO[Any,IOException,Unit] = ???
+     * EXERCISE
+     *
+     * Create a layer using `ZLayer.wire` and specifying all the pieces that go into the layer.
+     */
+    val fullLayer: ZLayer[Any, Nothing, Files with Logging] = ??? // ZLayer.wire[Files with Logging](???)
+
+    /**
+     * EXERCISE
+     *
+     * Using `ZIO#inject`, inject the full layer into the effect to remove its dependencies.
+     */
+    val effect2: ZIO[Any, IOException, Unit] = ???
 
     /**
      * EXERCISE
@@ -240,7 +240,7 @@ object LayerEnvironment extends App {
      */
     // effect
     //   .inject(???)
-    //   .exitCode
+    //
     ???
   }
 }

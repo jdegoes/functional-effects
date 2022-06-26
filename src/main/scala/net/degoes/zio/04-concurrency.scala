@@ -2,7 +2,7 @@ package net.degoes.zio
 
 import zio._
 
-object ForkJoin extends App {
+object ForkJoin extends ZIOAppDefault {
   import zio.Console._
 
   val printer =
@@ -15,11 +15,11 @@ object ForkJoin extends App {
    * print out a message, "Forked", then join the fiber using `Fiber#join`,
    * and finally, print out a message "Joined".
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    printer.exitCode
+  val run =
+    printer
 }
 
-object ForkInterrupt extends App {
+object ForkInterrupt extends ZIOAppDefault {
   import zio.Console._
 
   val infinitePrinter =
@@ -33,11 +33,11 @@ object ForkInterrupt extends App {
    * milliseconds, then interrupt the fiber using `Fiber#interrupt`, and
    * finally, print out a message "Interrupted".
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (infinitePrinter *> ZIO.sleep(10.millis)).exitCode
+  val run =
+    (infinitePrinter *> ZIO.sleep(10.millis))
 }
 
-object ParallelFib extends App {
+object ParallelFib extends ZIOAppDefault {
   import zio.Console._
 
   /**
@@ -47,35 +47,35 @@ object ParallelFib extends App {
    */
   def fib(n: Int): UIO[BigInt] = {
     def loop(n: Int, original: Int): UIO[BigInt] =
-      if (n <= 1) UIO(n)
+      if (n <= 1) ZIO.succeed(n)
       else
-        UIO.effectSuspendTotal {
-          (loop(n - 1, original) zipWith loop(n - 2, original))(_ + _)
+        ZIO.suspendSucceed {
+          loop(n - 1, original).zipWith(loop(n - 2, original))(_ + _)
         }
 
     loop(n, n)
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     (for {
       _ <- printLine(
             "What number of the fibonacci sequence should we calculate?"
           )
-      n <- readLine.orDie.flatMap(input => ZIO(input.toInt)).eventually
+      n <- readLine.orDie.flatMap(input => ZIO.attempt(input.toInt)).eventually
       f <- fib(n)
       _ <- printLine(s"fib(${n}) = ${f}")
-    } yield ()).exitCode
+    } yield ())
 }
 
-object AlarmAppImproved extends App {
+object AlarmAppImproved extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
   import java.util.concurrent.TimeUnit
 
-  lazy val getAlarmDuration: ZIO[Has[Console], IOException, Duration] = {
+  lazy val getAlarmDuration: ZIO[Any, IOException, Duration] = {
     def parseDuration(input: String): IO[NumberFormatException, Duration] =
       ZIO
-        .effect(
+        .attempt(
           Duration((input.toDouble * 1000.0).toLong, TimeUnit.MILLISECONDS)
         )
         .refineToOrDie[NumberFormatException]
@@ -97,7 +97,7 @@ object AlarmAppImproved extends App {
    * prints a dot every second that the alarm is sleeping for, and then
    * prints out a wakeup alarm message, like "Time to wakeup!!!".
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
@@ -105,7 +105,7 @@ object AlarmAppImproved extends App {
  * Effects can be forked to run in separate fibers. Sharing information between fibers can be done
  * using the `Ref` data type, which is like a concurrent version of a Scala `var`.
  */
-object ComputePi extends App {
+object ComputePi extends ZIOAppDefault {
   import zio.Random._
   import zio.Console._
   import zio.Clock._
@@ -136,7 +136,7 @@ object ComputePi extends App {
   /**
    * An effect that computes a random (x, y) point.
    */
-  val randomPoint: ZIO[Has[Random], Nothing, (Double, Double)] =
+  val randomPoint: ZIO[Any, Nothing, (Double, Double)] =
     nextDouble zip nextDouble
 
   /**
@@ -145,17 +145,17 @@ object ComputePi extends App {
    * Build a multi-fiber program that estimates the value of `pi`. Print out
    * ongoing estimates continuously until the estimation is complete.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object ParallelZip extends App {
+object ParallelZip extends ZIOAppDefault {
   import zio.Console._
 
   def fib(n: Int): UIO[Int] =
-    if (n <= 1) UIO(n)
+    if (n <= 1) ZIO.succeed(n)
     else
-      UIO.effectSuspendTotal {
+      ZIO.suspendSucceed {
         (fib(n - 1) zipWith fib(n - 2))(_ + _)
       }
 
@@ -165,11 +165,11 @@ object ParallelZip extends App {
    * Compute fib(10) and fib(13) in parallel using `ZIO#zipPar`, and display
    * the result.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object StmSwap extends App {
+object StmSwap extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
 
@@ -205,11 +205,11 @@ object StmSwap extends App {
    */
   def exampleStm: UIO[Int] = ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    exampleRef.map(_.toString).flatMap(printLine(_)).exitCode
+  val run =
+    exampleRef.map(_.toString).flatMap(printLine(_))
 }
 
-object StmLock extends App {
+object StmLock extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
 
@@ -227,22 +227,22 @@ object StmLock extends App {
     def make: UIO[Lock] = ???
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     (for {
       lock <- Lock.make
-      fiber1 <- lock.acquire
-                 .acquireRelease(lock.release)(printLine("Bob  : I have the lock!"))
+      fiber1 <- ZIO
+                 .acquireReleaseWith(lock.acquire)(_ => lock.release)(_ => printLine("Bob  : I have the lock!"))
                  .repeat(Schedule.recurs(10))
                  .fork
-      fiber2 <- lock.acquire
-                 .acquireRelease(lock.release)(printLine("Sarah: I have the lock!"))
+      fiber2 <- ZIO
+                 .acquireReleaseWith(lock.acquire)(_ => lock.release)(_ => printLine("Sarah: I have the lock!"))
                  .repeat(Schedule.recurs(10))
                  .fork
       _ <- (fiber1 zip fiber2).join
-    } yield ()).exitCode
+    } yield ())
 }
 
-object StmQueue extends App {
+object StmQueue extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
   import scala.collection.immutable.{ Queue => ScalaQueue }
@@ -260,17 +260,17 @@ object StmQueue extends App {
     def bounded[A](capacity: Int): UIO[Queue[A]] = ???
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     (for {
       queue <- Queue.bounded[Int](10)
       _     <- ZIO.foreach(0 to 100)(i => queue.offer(i)).fork
       _ <- ZIO.foreach(0 to 100)(
             _ => queue.take.flatMap(i => printLine(s"Got: ${i}"))
           )
-    } yield ()).exitCode
+    } yield ())
 }
 
-object StmLunchTime extends App {
+object StmLunchTime extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
 
@@ -329,7 +329,7 @@ object StmLunchTime extends App {
   def feedStarving(table: Table, attendees: Iterable[Attendee]): UIO[Unit] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+  val run = {
     val Attendees = 100
     val TableSize = 5
 
@@ -350,7 +350,7 @@ object StmLunchTime extends App {
   }
 }
 
-object StmPriorityQueue extends App {
+object StmPriorityQueue extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
 
@@ -372,7 +372,7 @@ object StmPriorityQueue extends App {
     def make[A]: STM[Nothing, PriorityQueue[A]] = ???
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     (for {
       _     <- printLine("Enter any key to exit...")
       queue <- PriorityQueue.make[String].commit
@@ -391,28 +391,28 @@ object StmPriorityQueue extends App {
             .forever
             .fork *>
             readLine
-    } yield 0).exitCode
+    } yield 0)
 }
 
-object StmReentrantLock extends App {
+object StmReentrantLock extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
 
   private final case class WriteLock(
     writeCount: Int,
     readCount: Int,
-    fiberId: Fiber.Id
+    fiberId: FiberId
   )
-  private final class ReadLock private (readers: Map[Fiber.Id, Int]) {
+  private final class ReadLock private (readers: Map[FiberId, Int]) {
     def total: Int = readers.values.sum
 
-    def noOtherHolder(fiberId: Fiber.Id): Boolean =
+    def noOtherHolder(fiberId: FiberId): Boolean =
       readers.size == 0 || (readers.size == 1 && readers.contains(fiberId))
 
-    def readLocks(fiberId: Fiber.Id): Int =
+    def readLocks(fiberId: FiberId): Int =
       readers.get(fiberId).fold(0)(identity)
 
-    def adjust(fiberId: Fiber.Id, adjust: Int): ReadLock = {
+    def adjust(fiberId: FiberId, adjust: Int): ReadLock = {
       val total = readLocks(fiberId)
 
       val newTotal = total + adjust
@@ -427,7 +427,7 @@ object StmReentrantLock extends App {
   private object ReadLock {
     val empty: ReadLock = new ReadLock(Map())
 
-    def apply(fiberId: Fiber.Id, count: Int): ReadLock =
+    def apply(fiberId: FiberId, count: Int): ReadLock =
       if (count <= 0) empty else new ReadLock(Map(fiberId -> count))
   }
 
@@ -445,18 +445,18 @@ object StmReentrantLock extends App {
 
     def readLocked: UIO[Boolean] = ???
 
-    val read: Managed[Nothing, Int] = ???
+    val read: ZIO[Scope, Nothing, Int] = ???
 
-    val write: Managed[Nothing, Int] = ???
+    val write: ZIO[Scope, Nothing, Int] = ???
   }
   object ReentrantReadWriteLock {
     def make: UIO[ReentrantReadWriteLock] = ???
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = ???
+  val run = ???
 }
 
-object StmDiningPhilosophers extends App {
+object StmDiningPhilosophers extends ZIOAppDefault {
   import zio.Console._
   import zio.stm._
   import java.io.IOException
@@ -509,7 +509,7 @@ object StmDiningPhilosophers extends App {
   def eat(
     philosopher: Int,
     roundtable: Roundtable
-  ): ZIO[Has[Console], IOException, Unit] = {
+  ): ZIO[Any, IOException, Unit] = {
     val placement = roundtable.seats(philosopher)
 
     val left  = placement.left
@@ -523,10 +523,10 @@ object StmDiningPhilosophers extends App {
     } yield ()
   }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+  val run = {
     val count = 10
 
-    def eaters(table: Roundtable): Iterable[ZIO[Has[Console], IOException, Unit]] =
+    def eaters(table: Roundtable): Iterable[ZIO[Any, IOException, Unit]] =
       (0 to count).map { index =>
         eat(index, table)
       }
@@ -536,6 +536,6 @@ object StmDiningPhilosophers extends App {
       fiber <- ZIO.forkAll(eaters(table))
       _     <- fiber.join
       _     <- printLine("All philosophers have eaten!")
-    } yield ()).exitCode
+    } yield ())
   }
 }

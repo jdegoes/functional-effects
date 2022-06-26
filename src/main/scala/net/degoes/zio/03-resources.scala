@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
-object Cat extends App {
+object Cat extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
 
@@ -25,11 +25,11 @@ object Cat extends App {
    * Implement a version of the command-line utility "cat", which dumps the
    * contents of the specified file to standard output.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object CatEnsuring extends App {
+object CatEnsuring extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
   import scala.io.Source
@@ -54,17 +54,20 @@ object CatEnsuring extends App {
       } yield contents
     }.refineToOrDie[IOException]
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
-      fileName <- ZIO
-                   .fromOption(args.headOption)
-                   .tapError(_ => printLine("You must specify a file name on the command line"))
-      contents <- readFile(fileName)
-      _        <- printLine(contents)
-    } yield ()).exitCode
+  val run =
+    getArgs.flatMap(
+      args =>
+        for {
+          fileName <- ZIO
+                       .fromOption(args.headOption)
+                       .tapError(_ => printLine("You must specify a file name on the command line"))
+          contents <- readFile(fileName)
+          _        <- printLine(contents)
+        } yield ()
+    )
 }
 
-object CatAcquireRelease extends App {
+object CatAcquireRelease extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
   import scala.io.Source
@@ -84,18 +87,21 @@ object CatAcquireRelease extends App {
   def readFile(file: String): ZIO[Any, IOException, String] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
-    for {
-      fileName <- ZIO
-                   .fromOption(args.headOption)
-                   .tapError(_ => printLine("You must specify a file name on the command line"))
-      contents <- readFile(fileName)
-      _        <- printLine(contents)
-    } yield ()
-  }.exitCode
+  val run = {
+    getArgs.flatMap(
+      args =>
+        for {
+          fileName <- ZIO
+                       .fromOption(args.headOption)
+                       .tapError(_ => printLine("You must specify a file name on the command line"))
+          contents <- readFile(fileName)
+          _        <- printLine(contents)
+        } yield ()
+    )
+  }
 }
 
-object SourceManaged extends App {
+object SourceManaged extends ZIOAppDefault {
   import zio.Console._
   import java.io.IOException
 
@@ -113,7 +119,7 @@ object SourceManaged extends App {
      * Use the `ZManaged.make` constructor to make a managed data type that
      * will automatically acquire and release the resource when it is used.
      */
-    def make(file: String): ZManaged[Any, IOException, ZSource] = {
+    def make(file: String): ZIO[Scope, IOException, ZSource] = {
       // An effect that acquires the resource:
       val open = ZIO.attemptBlockingIO(new ZSource(Source.fromFile(file)))
 
@@ -135,7 +141,7 @@ object SourceManaged extends App {
    */
   def readFiles(
     files: List[String]
-  ): ZIO[Has[Console], IOException, List[String]] = ???
+  ): ZIO[Any, IOException, List[String]] = ???
 
   /**
    * EXERCISE
@@ -145,11 +151,11 @@ object SourceManaged extends App {
    * can all be opened simultaneously. Otherwise, don't print out
    * anything except an error message.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object CatIncremental extends App {
+object CatIncremental extends ZIOAppDefault {
   import zio.Console._
   import java.io.{ FileInputStream, IOException, InputStream }
 
@@ -192,8 +198,8 @@ object CatIncremental extends App {
    * `ZIO#acquireRelease` or `ZManaged` to ensure the file is closed in the
    * event of error or interruption.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (args match {
+  val run =
+    getArgs.map(_.toList).flatMap {
       case _ :: Nil =>
         /**
          * EXERCISE
@@ -204,5 +210,5 @@ object CatIncremental extends App {
         ???
 
       case _ => printLine("Usage: cat <file>")
-    }).exitCode
+    }
 }

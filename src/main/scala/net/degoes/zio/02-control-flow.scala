@@ -4,7 +4,7 @@ import zio._
 import scala.collection.immutable.Nil
 import scala.annotation.tailrec
 
-object Looping extends App {
+object Looping extends ZIOAppDefault {
   import zio.Console._
 
   /**
@@ -15,11 +15,11 @@ object Looping extends App {
   def repeat[R, E, A](n: Int)(effect: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    repeat(100)(printLine("All work and no play makes Jack a dull boy")).exitCode
+  val run =
+    repeat(100)(printLine("All work and no play makes Jack a dull boy"))
 }
 
-object Interview extends App {
+object Interview extends ZIOAppDefault {
   import java.io.IOException
   import zio.Console._
 
@@ -35,7 +35,7 @@ object Interview extends App {
    * Implement the `getAllAnswers` function in such a fashion that it will ask
    * the user each question and collect them all into a list.
    */
-  def getAllAnswers(questions: List[String]): ZIO[Has[Console], IOException, List[String]] =
+  def getAllAnswers(questions: List[String]): ZIO[Any, IOException, List[String]] =
     questions match {
       case Nil     => ???
       case q :: qs => ???
@@ -47,11 +47,11 @@ object Interview extends App {
    * Use the preceding `getAllAnswers` function, together with the predefined
    * `questions`, to ask the user a bunch of questions, and print the answers.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object InterviewGeneric extends App {
+object InterviewGeneric extends ZIOAppDefault {
   import java.io.IOException
   import zio.Console._
 
@@ -72,11 +72,11 @@ object InterviewGeneric extends App {
       case a :: as => ???
     }
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object InterviewForeach extends App {
+object InterviewForeach extends ZIOAppDefault {
   import zio.Console._
 
   val questions =
@@ -93,11 +93,11 @@ object InterviewForeach extends App {
    * (`readLine`), and collect all answers into a collection. Finally, print
    * out the contents of the collection.
    */
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     ???
 }
 
-object WhileLoop extends App {
+object WhileLoop extends ZIOAppDefault {
   import zio.Console._
 
   /**
@@ -108,7 +108,7 @@ object WhileLoop extends App {
   def whileLoop[R, E, A](cond: UIO[Boolean])(zio: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+  val run = {
     def loop(variable: Ref[Int]) =
       whileLoop(variable.get.map(_ < 100)) {
         for {
@@ -121,11 +121,11 @@ object WhileLoop extends App {
     (for {
       variable <- Ref.make(0)
       _        <- loop(variable)
-    } yield 0).exitCode
+    } yield 0)
   }
 }
 
-object Iterate extends App {
+object Iterate extends ZIOAppDefault {
   import zio.Console._
 
   /**
@@ -137,24 +137,24 @@ object Iterate extends App {
   def iterate[R, E, A](start: A)(cond: A => Boolean)(f: A => ZIO[R, E, A]): ZIO[R, E, A] =
     ???
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     iterate(0)(_ < 100) { i =>
       printLine(s"At iteration: ${i}").as(i + 1)
-    }.exitCode
+    }
 }
 
-object TailRecursive extends App {
+object TailRecursive extends ZIOAppDefault {
   trait Response
   trait Request {
     def returnResponse(response: Response): Task[Unit]
   }
 
-  lazy val acceptRequest: Task[Request] = Task(new Request {
+  lazy val acceptRequest: Task[Request] = ZIO.attempt(new Request {
     def returnResponse(response: Response): Task[Unit] =
-      Task(println(s"Returning response ${response}"))
+      ZIO.attempt(println(s"Returning response ${response}"))
   })
 
-  def handleRequest(request: Request): Task[Response] = Task {
+  def handleRequest(request: Request): Task[Response] = ZIO.attempt {
     println(s"Handling request ${request}")
     new Response {}
   }
@@ -173,10 +173,10 @@ object TailRecursive extends App {
       nothing  <- webserver
     } yield nothing
 
-  def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  val run =
     (for {
       fiber <- webserver.fork
       _     <- ZIO.sleep(100.millis)
       _     <- fiber.interrupt
-    } yield ()).exitCode
+    } yield ())
 }
