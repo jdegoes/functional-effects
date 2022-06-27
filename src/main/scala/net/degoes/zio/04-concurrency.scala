@@ -99,10 +99,10 @@ object AlarmAppImproved extends ZIOAppDefault {
 }
 
 /**
- * Effects can be forked to run in separate fibers. Sharing information between fibers can be done
- * using the `Ref` data type, which is like a concurrent version of a Scala `var`.
+ * The Ref data type is a way for ZIO effects to utilize state. It is basically
+ * a concurrent-safe version of Scala's own `var`, but integrated into ZIO.
  */
-object ComputePi extends ZIOAppDefault {
+object ConcurrentRef extends ZIOAppDefault {
   import zio.Random._
 
   import zio.Clock._
@@ -135,6 +135,15 @@ object ComputePi extends ZIOAppDefault {
    */
   val randomPoint: ZIO[Any, Nothing, (Double, Double)] =
     nextDouble zip nextDouble
+
+  /**
+    * EXERCISE
+    * 
+    * Using `Ref#update`, make a function that adds a point into the state.
+    * If the point is inside the circle then increment `PiState#inside`. In any
+    * case, increment `PiState#total`.
+    */
+  def addPoint(point: (Double, Double), piState: PiState): UIO[Unit] = ???
 
   /**
    * EXERCISE

@@ -3,7 +3,7 @@ package net.degoes.zio
 import zio._
 import scala.concurrent.ExecutionContext
 
-object PoolLocking extends ZIOAppDefault {
+object ThreadPool extends ZIOAppDefault {
 
   lazy val dbPool: Executor = Executor.fromExecutionContext(ExecutionContext.global)
 
@@ -53,7 +53,7 @@ object PoolLocking extends ZIOAppDefault {
       Console.printLine("Main"))
 }
 
-object RuntimeTweaking {
+object CustomLogger {
 
   /**
    * EXERCISE
