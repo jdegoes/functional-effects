@@ -1,18 +1,16 @@
 package net.degoes.zio
 
 import zio._
-import zio.Executor
 import scala.concurrent.ExecutionContext
 
 object PoolLocking extends ZIOAppDefault {
-  import zio.Console._
 
   lazy val dbPool: Executor = Executor.fromExecutionContext(ExecutionContext.global)
 
   /**
    * EXERCISE
    *
-   * Using `ZIO#lock`, write an `onDatabase` combinator that runs the
+   * Using `ZIO#onExecutor`, write an `onDatabase` combinator that runs the
    * specified effect on the database thread pool.
    */
   def onDatabase[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] = ???
@@ -27,9 +25,9 @@ object PoolLocking extends ZIOAppDefault {
     val log = ZIO.succeed {
       val thread = Thread.currentThread()
 
-      val id        = thread.getId()
-      val name      = thread.getName()
-      val groupName = thread.getThreadGroup().getName()
+      val id        = ???
+      val name      = ???
+      val groupName = ???
 
       println(s"Thread($id, $name, $groupName)")
     }
@@ -44,74 +42,40 @@ object PoolLocking extends ZIOAppDefault {
    * determine which threads are executing which effects.
    */
   val run =
-    (printLine("Main") *>
+    (Console.printLine("Main") *>
       onDatabase {
-        printLine("Database") *>
+        Console.printLine("Database") *>
           ZIO.blocking {
-            printLine("Blocking")
+            Console.printLine("Blocking")
           } *>
-          printLine("Database")
+          Console.printLine("Database")
       } *>
-      printLine("Main"))
+      Console.printLine("Main"))
 }
 
-object PlatformTweaking {
-  // import Console._
-  // import zio.internal.Platform
-
-  // /**
-  //  * EXERCISE
-  //  *
-  //  * Modify the default platform by specifying a custom behavior for logging errors.
-  //  */
-  // lazy val platform = Platform.default.copy(reportFailure = ???)
-
-  // val environment = Runtime.default.environment
-
-  // /**
-  //  * EXERCISE
-  //  *
-  //  * Create a custom runtime using `platform` and `environment`, and use this to
-  //  * run an effect.
-  //  */
-  // lazy val customRuntime: Runtime[Any] = ???
-  // def exampleRun                        = customRuntime.unsafeRun(printLine("Test effect"))
-}
-
-object Sharding extends ZIOAppDefault {
-  import zio.Console._
+object RuntimeTweaking {
 
   /**
    * EXERCISE
    *
-   * Create N workers reading from a Queue, if one of them fails, then wait
-   * for the other ones to process their current item, but terminate all the
-   * workers.
-   *
-   * Return the first error, or never return, if there is no error.
+   * Using `ZLogger.simple`, create a logger that dumps text strings to the console
+   * using `println`.
    */
-  def shard[R, E, A](
-    queue: Queue[A],
-    n: Int,
-    worker: A => ZIO[R, E, Unit]
-  ): ZIO[R, Nothing, E] = ???
+  lazy val simpleLogger: ZLogger[String, Unit] = ???
 
-  val run = {
-    def makeWorker(ref: Ref[Int]): Int => ZIO[Any, String, Unit] =
-      (work: Int) =>
-        for {
-          count <- ref.get
-          _ <- if (count < 100) printLine(s"Worker is processing item ${work} after ${count}").orDie
-              else ZIO.fail(s"Uh oh, failed processing ${work} after ${count}")
-          _ <- ref.update(_ + 1)
-        } yield ()
+  /**
+   * EXERCISE
+   *
+   * Create a layer that will install your simple logger using Runtime.addLogger.
+   */
+  lazy val withCustomLogger: ZLayer[Any, Nothing, Unit] = ???
 
-    (for {
-      queue <- Queue.bounded[Int](100)
-      ref   <- Ref.make(0)
-      _     <- queue.offer(1).forever.fork
-      error <- shard(queue, 10, makeWorker(ref))
-      _     <- printLine(s"Failed with ${error}")
-    } yield ())
-  }
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO#provide`, inject the custom logger into the following effect
+   * and verify your logger is being used.
+   */
+  val run =
+    ZIO.log("Hello World!")
 }

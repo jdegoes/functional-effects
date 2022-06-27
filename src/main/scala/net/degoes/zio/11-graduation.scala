@@ -4,8 +4,45 @@ import zio._
 import java.text.NumberFormat
 import java.nio.charset.StandardCharsets
 
+object Sharding extends ZIOAppDefault {
+
+  /**
+   * EXERCISE
+   *
+   * Create N workers reading from a Queue, if one of them fails, then wait
+   * for the other ones to process their current item, but terminate all the
+   * workers.
+   *
+   * Return the first error, or never return, if there is no error.
+   */
+  def shard[R, E, A](
+    queue: Queue[A],
+    n: Int,
+    worker: A => ZIO[R, E, Unit]
+  ): ZIO[R, Nothing, E] = ???
+
+  val run = {
+    def makeWorker(ref: Ref[Int]): Int => ZIO[Any, String, Unit] =
+      (work: Int) =>
+        for {
+          count <- ref.get
+          _ <- if (count < 100) Console.printLine(s"Worker is processing item ${work} after ${count}").orDie
+              else ZIO.fail(s"Uh oh, failed processing ${work} after ${count}")
+          _ <- ref.update(_ + 1)
+        } yield ()
+
+    (for {
+      queue <- Queue.bounded[Int](100)
+      ref   <- Ref.make(0)
+      _     <- queue.offer(1).forever.fork
+      error <- shard(queue, 10, makeWorker(ref))
+      _     <- Console.printLine(s"Failed with ${error}")
+    } yield ())
+  }
+}
+
 object SimpleActor extends ZIOAppDefault {
-  import zio.Console._
+
   import zio.stm._
 
   sealed trait Command
@@ -35,13 +72,13 @@ object SimpleActor extends ZIOAppDefault {
             actor(AdjustTemperature(temp))
           }
       temp <- actor(ReadTemperature)
-      _    <- printLine(s"Final temperature is ${temp}")
+      _    <- Console.printLine(s"Final temperature is ${temp}")
     } yield ())
   }
 }
 
 object parallel_web_crawler {
-  import zio.Console._
+
   import zio.Clock._
 
   trait Web {
@@ -188,12 +225,12 @@ object parallel_web_crawler {
    * it needs.
    */
   val run =
-    printLine("Hello World!")
+    Console.printLine("Hello World!")
 }
 
 object Hangman extends ZIOAppDefault {
   import Dictionary.Dictionary
-  import zio.Console._
+
   import zio.Random._
   import java.io.IOException
 
@@ -250,7 +287,7 @@ object Hangman extends ZIOAppDefault {
 
     val text = word + "\n" + line + "\n\n" + guesses + "\n"
 
-    printLine(text)
+    Console.printLine(text)
   }
 
   final case class State(name: String, guesses: Set[Char], word: String) {
@@ -300,7 +337,6 @@ object Hangman extends ZIOAppDefault {
 }
 
 object TicTacToe extends ZIOAppDefault {
-  import zio.Console._
 
   sealed trait Mark {
     final def renderChar: Char = this match {
@@ -421,5 +457,5 @@ object TicTacToe extends ZIOAppDefault {
    * computer opponent.
    */
   val run =
-    printLine(TestBoard)
+    Console.printLine(TestBoard)
 }

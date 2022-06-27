@@ -5,16 +5,20 @@ import java.text.NumberFormat
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import scala.io.Source
 
 object Cat extends ZIOAppDefault {
-  import zio.Console._
+
   import java.io.IOException
+
+  def getScalaSource(file: String): Source = Source.fromFile(file)
 
   /**
    * EXERCISE
    *
    * Using `ZIO.attemptBlocking`, implement a function to read a file on the
-   * blocking thread pool, storing the result into a string.
+   * blocking thread pool, storing the result into a string. You may find
+   * it helpful to use the `getScalaSource` helper method defined above.
    */
   def readFile(file: String): ZIO[Any, IOException, String] =
     ???
@@ -30,12 +34,12 @@ object Cat extends ZIOAppDefault {
 }
 
 object CatEnsuring extends ZIOAppDefault {
-  import zio.Console._
+
   import java.io.IOException
   import scala.io.Source
 
   def open(file: String): ZIO[Any, IOException, Source] =
-    ZIO.attemptBlockingIO(scala.io.Source.fromFile(file))
+    ZIO.attemptBlockingIO(Source.fromFile(file))
 
   def close(source: Source): ZIO[Any, IOException, Unit] =
     ZIO.attemptBlockingIO(source.close())
@@ -55,20 +59,18 @@ object CatEnsuring extends ZIOAppDefault {
     }.refineToOrDie[IOException]
 
   val run =
-    getArgs.flatMap(
-      args =>
-        for {
-          fileName <- ZIO
-                       .fromOption(args.headOption)
-                       .tapError(_ => printLine("You must specify a file name on the command line"))
-          contents <- readFile(fileName)
-          _        <- printLine(contents)
-        } yield ()
-    )
+    for {
+      args <- getArgs
+      fileName <- ZIO
+                   .fromOption(args.headOption)
+                   .tapError(_ => Console.printLine("You must specify a file name on the command line"))
+      contents <- readFile(fileName)
+      _        <- Console.printLine(contents)
+    } yield ()
 }
 
 object CatAcquireRelease extends ZIOAppDefault {
-  import zio.Console._
+
   import java.io.IOException
   import scala.io.Source
 
@@ -81,28 +83,25 @@ object CatAcquireRelease extends ZIOAppDefault {
   /**
    * EXERCISE
    *
-   * Using `ZIO#acquireRelease`, implement a safe version of `readFile` that
+   * Using `ZIO#acquireReleaseWith`, implement a safe version of `readFile` that
    * cannot fail to close the file, no matter what happens during reading.
    */
-  def readFile(file: String): ZIO[Any, IOException, String] =
-    ???
+  def readFile(file: String): ZIO[Any, IOException, String] = ???
 
-  val run = {
-    getArgs.flatMap(
-      args =>
-        for {
-          fileName <- ZIO
-                       .fromOption(args.headOption)
-                       .tapError(_ => printLine("You must specify a file name on the command line"))
-          contents <- readFile(fileName)
-          _        <- printLine(contents)
-        } yield ()
-    )
-  }
+  val run =
+    for {
+      args <- getArgs
+      fileName <- ZIO
+                   .fromOption(args.headOption)
+                   .tapError(_ => Console.printLine("You must specify a file name on the command line"))
+      contents <- readFile(fileName)
+      _        <- Console.printLine(contents)
+    } yield ()
+
 }
 
-object SourceManaged extends ZIOAppDefault {
-  import zio.Console._
+object SourceScoped extends ZIOAppDefault {
+
   import java.io.IOException
 
   import scala.io.Source
@@ -116,8 +115,8 @@ object SourceManaged extends ZIOAppDefault {
     /**
      * EXERCISE
      *
-     * Use the `ZManaged.make` constructor to make a managed data type that
-     * will automatically acquire and release the resource when it is used.
+     * Use the `ZIO.acquireRelease` constructor to make a scoped effect that
+     * succeeds with a `ZSource`, whose finalizer will close the opened resource.
      */
     def make(file: String): ZIO[Scope, IOException, ZSource] = {
       // An effect that acquires the resource:
@@ -135,28 +134,24 @@ object SourceManaged extends ZIOAppDefault {
   /**
    * EXERCISE
    *
-   * Using `ZManaged.foreachPar` and other functions as necessary, implement a function
-   * to read the contents of all files in parallel, but ensuring that if anything
-   * goes wrong during parallel reading, all files are safely closed.
+   * Using `ZSource.make`, as well as `ZIO.scoped` (to define the scope in
+   * which resources are open), read the contents of the specified file into
+   * a `String`.
    */
-  def readFiles(
-    files: List[String]
-  ): ZIO[Any, IOException, List[String]] = ???
+  def readFile(file: String): ZIO[Any, IOException, String] = ???
 
   /**
    * EXERCISE
    *
-   * Implement a function that prints out all files specified on the
-   * command-line. Only print out contents from these files if they
-   * can all be opened simultaneously. Otherwise, don't print out
-   * anything except an error message.
+   * Write an app that dumps the contents of the files specified by the
+   * command-line arguments to standard out.
    */
   val run =
     ???
 }
 
 object CatIncremental extends ZIOAppDefault {
-  import zio.Console._
+
   import java.io.{ FileInputStream, IOException, InputStream }
 
   final case class FileHandle private (private val is: InputStream) {
@@ -174,8 +169,10 @@ object CatIncremental extends ZIOAppDefault {
   /**
    * EXERCISE
    *
-   * Refactor `FileHandle` so that creating it returns a `ZManaged`, so that
-   * it is impossible to forget to close an open handle.
+   * Refactor `FileHandle` so that creating it returns a scoped effect, so
+   * that it is impossible to forget to close an open handle.
+   *
+   * HINT: `ZIO.acquireRelease` is the easiest way to do this!
    */
   object FileHandle {
     final def open(file: String): ZIO[Any, IOException, FileHandle] =
@@ -188,7 +185,7 @@ object CatIncremental extends ZIOAppDefault {
    * Implement an incremental version of `cat` that pulls a chunk of bytes at
    * a time, stopping when there are no more chunks left.
    */
-  def cat(fh: FileHandle): ZIO[Any with Console, IOException, Unit] =
+  def cat(fh: FileHandle): ZIO[Any, IOException, Unit] =
     ???
 
   /**
@@ -200,7 +197,7 @@ object CatIncremental extends ZIOAppDefault {
    */
   val run =
     getArgs.map(_.toList).flatMap {
-      case _ :: Nil =>
+      case file :: Nil =>
         /**
          * EXERCISE
          *
@@ -209,6 +206,25 @@ object CatIncremental extends ZIOAppDefault {
          */
         ???
 
-      case _ => printLine("Usage: cat <file>")
+      case _ => Console.printLine("Usage: cat <file>")
     }
+}
+
+object AddFinalizer extends ZIOAppDefault {
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO.addFinalizer`, which adds a finalizer to the currently open
+   * scope, implement your own version of `ZIO.acquireRelease`. Note: The
+   * version you implement need not be safe in the presence of interruption,
+   * but it should be safe in the presence of errors.
+   */
+  def acquireRelease[R, E, A](acquire: ZIO[R, E, A])(release: A => ZIO[R, Nothing, Any]): ZIO[R with Scope, E, A] = ???
+
+  val run =
+    for {
+      _ <- acquireRelease(Console.printLine("Acquired!"))(_ => Console.printLine("Released!").orDie)
+      _ <- ZIO.fail("Uh oh!")
+    } yield ()
 }

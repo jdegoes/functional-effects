@@ -5,7 +5,6 @@ import scala.collection.immutable.Nil
 import scala.annotation.tailrec
 
 object Looping extends ZIOAppDefault {
-  import zio.Console._
 
   /**
    * EXERCISE
@@ -16,12 +15,11 @@ object Looping extends ZIOAppDefault {
     ???
 
   val run =
-    repeat(100)(printLine("All work and no play makes Jack a dull boy"))
+    repeat(100)(Console.printLine("All work and no play makes Jack a dull boy"))
 }
 
 object Interview extends ZIOAppDefault {
   import java.io.IOException
-  import zio.Console._
 
   val questions =
     "Where where you born?" ::
@@ -53,7 +51,6 @@ object Interview extends ZIOAppDefault {
 
 object InterviewGeneric extends ZIOAppDefault {
   import java.io.IOException
-  import zio.Console._
 
   val questions =
     "Where where you born?" ::
@@ -77,7 +74,6 @@ object InterviewGeneric extends ZIOAppDefault {
 }
 
 object InterviewForeach extends ZIOAppDefault {
-  import zio.Console._
 
   val questions =
     "Where where you born?" ::
@@ -89,8 +85,8 @@ object InterviewForeach extends ZIOAppDefault {
    * EXERCISE
    *
    * Using `ZIO.foreach`, iterate over each question in `questions`, print the
-   * question to the user (`printLine`), read the answer from the user
-   * (`readLine`), and collect all answers into a collection. Finally, print
+   * question to the user (`Console.printLine`), read the answer from the user
+   * (`Console.readLine`), and collect all answers into a collection. Finally, print
    * out the contents of the collection.
    */
   val run =
@@ -98,12 +94,12 @@ object InterviewForeach extends ZIOAppDefault {
 }
 
 object WhileLoop extends ZIOAppDefault {
-  import zio.Console._
 
   /**
    * EXERCISE
    *
-   * Implement the functional effect version of a while loop.
+   * Implement the functional effect version of a while loop so the
+   * application runs correctly.
    */
   def whileLoop[R, E, A](cond: UIO[Boolean])(zio: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] =
     ???
@@ -113,7 +109,7 @@ object WhileLoop extends ZIOAppDefault {
       whileLoop(variable.get.map(_ < 100)) {
         for {
           value <- variable.get
-          _     <- printLine(s"At iteration: ${value}")
+          _     <- Console.printLine(s"At iteration: ${value}")
           _     <- variable.update(_ + 1)
         } yield ()
       }
@@ -126,7 +122,6 @@ object WhileLoop extends ZIOAppDefault {
 }
 
 object Iterate extends ZIOAppDefault {
-  import zio.Console._
 
   /**
    * EXERCISE
@@ -139,7 +134,7 @@ object Iterate extends ZIOAppDefault {
 
   val run =
     iterate(0)(_ < 100) { i =>
-      printLine(s"At iteration: ${i}").as(i + 1)
+      Console.printLine(s"At iteration: ${i}").as(i + 1)
     }
 }
 
