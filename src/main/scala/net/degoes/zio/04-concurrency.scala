@@ -121,7 +121,7 @@ object ParallelZip extends ZIOAppDefault {
  * The Ref data type is a way for ZIO effects to utilize state. It is basically
  * a concurrent-safe version of Scala's own `var`, but integrated into ZIO.
  */
-object ConcurrentRef extends ZIOAppDefault {
+object RefExample extends ZIOAppDefault {
   import zio.Random._
 
   import zio.Clock._
