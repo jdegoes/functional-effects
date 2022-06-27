@@ -352,3 +352,28 @@ object MultipleSyncInterop extends ZIOAppDefault {
     } yield ()
   }
 }
+
+object AsyncExample extends ZIOAppDefault {
+  import scala.concurrent.ExecutionContext.global
+
+  def loadBodyAsync(onSuccess: String => Unit, onFailure: Throwable => Unit): Unit =
+    global.execute { () =>
+      if (scala.util.Random.nextDouble() < 0.01) onFailure(new java.io.IOException("Could not load body!"))
+      else onSuccess("Body of request")
+    }
+
+  /**
+   * EXERCISE
+   *
+   * Using `ZIO.async`, convert the above callback-based API into a
+   * nice clean ZIO effect.
+   */
+  lazy val loadBodyAsyncZIO: ZIO[Any, Throwable, String] =
+    ???
+
+  val run =
+    for {
+      body <- loadBodyAsyncZIO
+      _    <- Console.printLine(body)
+    } yield ()
+}
