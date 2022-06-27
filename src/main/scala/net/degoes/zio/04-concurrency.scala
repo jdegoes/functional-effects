@@ -98,6 +98,25 @@ object AlarmAppImproved extends ZIOAppDefault {
     ???
 }
 
+object ParallelZip extends ZIOAppDefault {
+
+  def fib(n: Int): UIO[Int] =
+    if (n <= 1) ZIO.succeed(n)
+    else
+      ZIO.suspendSucceed {
+        (fib(n - 1) zipWith fib(n - 2))(_ + _)
+      }
+
+  /**
+   * EXERCISE
+   *
+   * Compute fib(10) and fib(13) in parallel using `ZIO#zipPar`, and display
+   * the result.
+   */
+  val run =
+    ???
+}
+
 /**
  * The Ref data type is a way for ZIO effects to utilize state. It is basically
  * a concurrent-safe version of Scala's own `var`, but integrated into ZIO.
@@ -137,12 +156,12 @@ object ConcurrentRef extends ZIOAppDefault {
     nextDouble zip nextDouble
 
   /**
-    * EXERCISE
-    * 
-    * Using `Ref#update`, make a function that adds a point into the state.
-    * If the point is inside the circle then increment `PiState#inside`. In any
-    * case, increment `PiState#total`.
-    */
+   * EXERCISE
+   *
+   * Using `Ref#update`, make a function that adds a point into the state.
+   * If the point is inside the circle then increment `PiState#inside`. In any
+   * case, increment `PiState#total`.
+   */
   def addPoint(point: (Double, Double), piState: PiState): UIO[Unit] = ???
 
   /**
@@ -155,21 +174,25 @@ object ConcurrentRef extends ZIOAppDefault {
     ???
 }
 
-object ParallelZip extends ZIOAppDefault {
-
-  def fib(n: Int): UIO[Int] =
-    if (n <= 1) ZIO.succeed(n)
-    else
-      ZIO.suspendSucceed {
-        (fib(n - 1) zipWith fib(n - 2))(_ + _)
-      }
+object PromiseExample extends ZIOAppDefault {
 
   /**
    * EXERCISE
    *
-   * Compute fib(10) and fib(13) in parallel using `ZIO#zipPar`, and display
-   * the result.
+   * Do some computation that produces an integer. When yare done, complete
+   * the promise with `Promise#succeed`.
    */
+  def doCompute(result: Promise[Nothing, Int]): UIO[Unit] = ???
+
+  /**
+   * EXERCISE
+   *
+   * Fork the above computation in a separate fiber, giving it a promise
+   * that it can use, and then wait for the promise to be completed,
+   * using `Promise#await`.
+   */
+  lazy val waitForCompute: ZIO[Any, Nothing, Unit] = ???
+
   val run =
-    ???
+    waitForCompute
 }
