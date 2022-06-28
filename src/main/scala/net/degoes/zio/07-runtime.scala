@@ -2,7 +2,44 @@ package net.degoes.zio
 
 import zio._
 import scala.concurrent.ExecutionContext
+import java.io.IOException
 
+object CustomRuntime {
+  val defaultEnvironment  = ZEnvironment.empty
+  val defaultRuntimeFlags = RuntimeFlags.default
+  val defaultFiberRefs    = FiberRefs.empty
+
+  final case class AppConfig(name: String)
+
+  /**
+   * EXERCISE
+   *
+   * Create a custom runtime that bundles a value of type `AppConfig` into the
+   * environment.
+   */
+  lazy val customRuntime = Runtime(defaultEnvironment, defaultFiberRefs, defaultRuntimeFlags)
+
+  val program: ZIO[AppConfig, IOException, Unit] =
+    for {
+      appConfig <- ZIO.service[AppConfig]
+      _         <- Console.printLine(s"Application name is ${appConfig.name}")
+      _         <- Console.printLine("What is your name?")
+      name      <- Console.readLine
+      _         <- Console.printLine(s"Hello, ${name}!")
+    } yield ()
+
+  /**
+   * EXERCISE
+   *
+   * Using the `run` method of the custom runtime you created,
+   * execute the `program` effect above.
+   *
+   * NOTE: You will have to use `Unsafe.unsafe { implicit u => ... }`
+   * or `Unsafe.unsafe { ... }` (Scala 3) in order to call `run`.
+   */
+  def main(args: Array[String]): Unit =
+    ???
+}
 object ThreadPool extends ZIOAppDefault {
 
   lazy val dbPool: Executor = Executor.fromExecutionContext(ExecutionContext.global)

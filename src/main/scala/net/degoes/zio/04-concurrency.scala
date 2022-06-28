@@ -196,3 +196,28 @@ object PromiseExample extends ZIOAppDefault {
   val run =
     waitForCompute
 }
+
+object FiberRefExample extends ZIOAppDefault {
+
+  /**
+   * EXERCISE
+   *
+   * Make the child increment the ref and see how the output of the program
+   * changes.
+   */
+  def makeChild(ref: FiberRef[Int]) =
+    for {
+      _ <- ref.get.debug("child initial value")
+      _ <- ref.get.debug("child after update")
+    } yield ()
+
+  val run =
+    for {
+      ref   <- FiberRef.make[Int](0, identity(_), _ + _)
+      _     <- ref.get.debug("parent before fork")
+      child <- makeChild(ref).fork
+      _     <- ref.get.debug("parent after fork")
+      _     <- child.join
+      _     <- ref.get.debug("parent after join")
+    } yield ()
+}
