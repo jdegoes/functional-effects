@@ -7,6 +7,14 @@ object ForkJoin extends ZIOAppDefault {
   val printer =
     Console.printLine(".").repeat(Schedule.recurs(10))
 
+  def parallel[A, B](left: Task[A], right: Task[B]): Task[(A, B)] = 
+    for {
+      fiberA <- left.fork 
+      fiberB <- right.fork
+      a <- fiberA.join 
+      b <- fiberB.join 
+    } yield (a, b)
+
   /**
    * EXERCISE
    *
@@ -15,7 +23,10 @@ object ForkJoin extends ZIOAppDefault {
    * and finally, print out a message "Joined".
    */
   val run =
-    printer
+    for {
+      fiber <- printer.fork
+      exit  <- fiber.await
+    } yield () 
 }
 
 object ForkInterrupt extends ZIOAppDefault {
@@ -32,7 +43,12 @@ object ForkInterrupt extends ZIOAppDefault {
    * finally, print out a message "Interrupted".
    */
   val run =
-    (infinitePrinter *> ZIO.sleep(10.millis))
+    for {
+      fiber <- infinitePrinter.fork
+      _     <- ZIO.sleep(10.millis)
+      exit  <- fiber.interrupt
+      _     <- Console.printLine(exit)
+    } yield ()
 }
 
 object ParallelFib extends ZIOAppDefault {

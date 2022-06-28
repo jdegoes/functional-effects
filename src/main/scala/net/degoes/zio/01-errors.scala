@@ -172,8 +172,9 @@ object ErrorRefinement2 extends ZIOAppDefault {
    * narrow the error type as necessary.
    */
   lazy val getAlarmDuration: ZIO[Any, IOException, Duration] = {
-    def parseDuration(input: String): IO[NumberFormatException, Duration] =
-      ???
+    def parseDuration(input: String): IO[NumberFormatException, Duration] = 
+      ZIO.attempt(Duration.fromMillis((input.toDouble * 1000).toLong))
+        .refineToOrDie[NumberFormatException]
 
     def fallback(input: String): ZIO[Any, IOException, Duration] =
       Console.printLine(s"The input ${input} is not valid.") *> getAlarmDuration
@@ -193,7 +194,12 @@ object ErrorRefinement2 extends ZIOAppDefault {
    * prints out a wakeup alarm message, like "Time to wakeup!!!".
    */
   val run =
-    ???
+    for {
+      _        <- Console.printLine("Welcome to my simple alarm application!")
+      duration <- getAlarmDuration
+      _        <- ZIO.sleep(duration)
+      _        <- Console.printLine("Time to wakeup!!")
+    } yield ()
 }
 
 object ZIOFinally extends ZIOAppDefault {
@@ -205,7 +211,7 @@ object ZIOFinally extends ZIOAppDefault {
    * effect, which will be executed whether `tickingBomb` succeeds
    * or fails. Print out a message to the console saying "Executed".
    */
-  lazy val tickingBomb2 = tickingBomb
+  lazy val tickingBomb2 = tickingBomb.ensuring(Console.printLine("Executed").ignore)
 
   /**
    * EXERCISE
@@ -220,6 +226,7 @@ object ZIOFinally extends ZIOAppDefault {
 }
 
 object SequentialCause extends ZIOAppDefault {
+  // ZEnvironment[R] => Either[Cause[E], A]
 
   val failed1 = Cause.fail("Uh oh 1")
   val failed2 = Cause.fail("Uh oh 2")
@@ -230,15 +237,14 @@ object SequentialCause extends ZIOAppDefault {
    * Using `Cause.++`, form a sequential cause by composing `failed1`
    * and `failed2`.
    */
-  lazy val composed = ???
+  lazy val composed = failed1 ++ failed2
 
   /**
    * EXERCISE
    *
    * Using `Cause.prettyPrint`, dump out `composed` to the console.
    */
-  val run =
-    ???
+  val run = Console.printLine(composed.prettyPrint)
 }
 
 object ParalellCause extends ZIOAppDefault {
@@ -252,23 +258,25 @@ object ParalellCause extends ZIOAppDefault {
    * Using `Cause.&&`, form a parallel cause by composing `failed1`
    * and `failed2`.
    */
-  lazy val composed = ???
+  lazy val composed = failed1 && failed2
 
   /**
    * EXERCISE
    *
    * Using `Cause.prettyPrint`, dump out `composed` to the console.
    */
-  val run =
-    ???
+  val run = Console.printLine(composed.prettyPrint)
 }
 
 object Sandbox extends ZIOAppDefault {
+  // Cause.fail, Cause.die, Cause.interrupt, &&, ++
+  // sandbox : ZIO[R, E, A] => ZIO[R, Cause[E], A]
+  // effect.exit : ZIO[R, Nothing, Exit[E, A]]
 
   val failed1    = ZIO.fail("Uh oh 1")
   val failed2    = ZIO.fail("Uh oh 2")
-  val finalizer1 = ZIO.fail(new Exception("Finalizing 1!")).orDie
-  val finalizer2 = ZIO.fail(new Exception("Finalizing 2!")).orDie
+  val finalizer1 = ZIO.die(new Exception("Finalizing 1!"))
+  val finalizer2 = ZIO.die(new Exception("Finalizing 2!"))
 
   val composed = ZIO.uninterruptible {
     (failed1 ensuring finalizer1) zipPar (failed2 ensuring finalizer2)
@@ -280,6 +288,5 @@ object Sandbox extends ZIOAppDefault {
    * Using `ZIO#sandbox`, sandbox the `composed` effect and print out the
    * resulting `Cause` value to the console using `Console.printLine`.
    */
-  val run =
-    ???
+  val run = composed.catchAllCause(cause => Console.printLine(cause) *> ZIO.refailCause(cause))
 }

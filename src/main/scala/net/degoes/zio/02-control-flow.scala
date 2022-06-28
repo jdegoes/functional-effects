@@ -12,7 +12,32 @@ object Looping extends ZIOAppDefault {
    * Implement a `repeat` combinator using `flatMap` (or `zipRight`) and recursion.
    */
   def repeat[R, E, A](n: Int)(effect: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] =
-    ???
+    if (n <= 0) ZIO.succeed(Chunk.empty)
+    else effect.zipWith(repeat(n - 1)(effect))((a, as) => a +: as)
+
+  def repeatRef[R, E, A](n: Int)(effect: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] = {
+    def repeat1(result: Ref[Chunk[A]], remainder: Ref[Int]): ZIO[R, E, Boolean] = 
+      for {
+        n <- remainder.get 
+        b <- if (n > 0) {
+              for {
+                a <- effect 
+                _ <- remainder.update(_ - 1)
+                _ <- result.update(_ :+ a)
+              } yield true
+            } else ZIO.succeed(false)
+      } yield b
+
+    for {
+      result <- Ref.make(Chunk.empty[A])
+      ref    <- Ref.make(n)
+      _      <- repeat1(result, ref).repeatWhile(_ == true)
+      chunk  <- result.get 
+    } yield chunk
+  }
+      
+  def repeatCollect[R, E, A](n: Int)(effect: ZIO[R, E, A]): ZIO[R, Nothing, Chunk[Either[E, A]]] =
+    repeat(n)(effect.either)
 
   val run =
     repeat(100)(Console.printLine("All work and no play makes Jack a dull boy"))
@@ -35,8 +60,13 @@ object Interview extends ZIOAppDefault {
    */
   def getAllAnswers(questions: List[String]): ZIO[Any, IOException, List[String]] =
     questions match {
-      case Nil     => ???
-      case q :: qs => ???
+      case Nil     => ZIO.succeed(Nil)
+      case q :: qs => 
+        for {
+          _  <- Console.printLine(q)
+          a  <- Console.readLine("> ")
+          as <- getAllAnswers(qs)
+        } yield a :: as 
     }
 
   /**
@@ -46,7 +76,7 @@ object Interview extends ZIOAppDefault {
    * `questions`, to ask the user a bunch of questions, and print the answers.
    */
   val run =
-    ???
+    getAllAnswers(questions)
 }
 
 object InterviewGeneric extends ZIOAppDefault {
@@ -65,12 +95,21 @@ object InterviewGeneric extends ZIOAppDefault {
    */
   def iterateAndCollect[R, E, A, B](as: List[A])(f: A => ZIO[R, E, B]): ZIO[R, E, List[B]] =
     as match {
-      case Nil     => ???
-      case a :: as => ???
+      case Nil     => ZIO.succeed(Nil)
+      case a :: as => 
+        for {
+          b <- f(a)
+          bs <- iterateAndCollect(as)(f)
+        } yield b :: bs 
     }
 
-  val run =
-    ???
+  val run = 
+    iterateAndCollect(questions) { question =>
+      for {
+        _      <- Console.printLine(question)
+        answer <- Console.readLine("> ")
+      } yield answer
+    }
 }
 
 object InterviewForeach extends ZIOAppDefault {
@@ -90,7 +129,12 @@ object InterviewForeach extends ZIOAppDefault {
    * out the contents of the collection.
    */
   val run =
-    ???
+    ZIO.foreach(questions) { question =>
+      for {
+        _      <- Console.printLine(question)
+        answer <- Console.readLine("> ")
+      } yield answer
+    }
 }
 
 object WhileLoop extends ZIOAppDefault {
@@ -102,7 +146,11 @@ object WhileLoop extends ZIOAppDefault {
    * application runs correctly.
    */
   def whileLoop[R, E, A](cond: UIO[Boolean])(zio: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] =
-    ???
+    for {
+      continue <- cond 
+      chunk    <- if (continue) zio.zipWith(whileLoop(cond)(zio))(_ +: _)
+                  else ZIO.succeed(Chunk.empty)
+    } yield chunk 
 
   val run = {
     def loop(variable: Ref[Int]) =
@@ -130,7 +178,8 @@ object Iterate extends ZIOAppDefault {
    * evaluates to false, returning the "last" value of type `A`.
    */
   def iterate[R, E, A](start: A)(cond: A => Boolean)(f: A => ZIO[R, E, A]): ZIO[R, E, A] =
-    ???
+    if (cond(start)) f(start).flatMap(iterate(_)(cond)(f))
+    else ZIO.succeed(start)
 
   val run =
     iterate(0)(_ < 100) { i =>
@@ -161,13 +210,11 @@ object TailRecursive extends ZIOAppDefault {
    * recursive.
    */
   lazy val webserver: Task[Nothing] =
-    for {
+    (for {
       request  <- acceptRequest
       response <- handleRequest(request)
       _        <- request.returnResponse(response)
-      nothing  <- webserver
-    } yield nothing
-
+    } yield ()).forever
   val run =
     (for {
       fiber <- webserver.fork
