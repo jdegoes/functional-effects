@@ -1,6 +1,7 @@
 package net.degoes.zio
 
 import zio._
+import zio.metrics.Metric
 
 object SimpleLogging extends ZIOAppDefault {
 
@@ -40,4 +41,43 @@ object LogSpan extends ZIOAppDefault {
 
   val run =
     createUser("sherlockholmes", "jkdf67sf6", 21381L)
+}
+
+object CounterExample extends ZIOAppDefault {
+  final case class Request(body: String)
+  final case class Response(body: String)
+
+  /**
+   * EXERCISE
+   *
+   * Use the constructors in `Metric` to make a counter metric that accepts
+   * integers as input.
+   */
+  lazy val requestCounter: Metric.Counter[Int] = ???
+
+  /**
+   * EXERCISE
+   *
+   * Use methods on the counter to increment the counter on every request.
+   */
+  def processRequest(request: Request): Task[Response] =
+    ZIO.succeed(Response("OK"))
+
+  /**
+   * EXERCISE
+   *
+   * Use methods on the counter to print out its value.
+   *
+   * NOTE: In real applications you don't need to poll metrics because they
+   * will be exported to monitoring systems.
+   *
+   */
+  lazy val printCounter: ZIO[Any, Nothing, Unit] = ???
+
+  lazy val run = {
+    val processor = processRequest(Request("input")).repeatN(99)
+    val printer   = printCounter.schedule(Schedule.fixed(100.millis))
+
+    processor.race(printer)
+  }
 }

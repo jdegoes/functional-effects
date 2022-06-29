@@ -64,6 +64,42 @@ object ParallelFib extends ZIOAppDefault {
     } yield ())
 }
 
+object TimeoutExample extends ZIOAppDefault {
+  def fib(n: Int): UIO[Int] =
+    if (n <= 1) ZIO.succeed(n)
+    else
+      ZIO.suspendSucceed {
+        fib(n - 1).zipWith(fib(n - 2))(_ + _)
+      }
+
+  /**
+   * EXERCISE
+   *
+   * Use `ZIO#timeout` to add a timeout to the following code so that
+   * it doesn't run for more than 10 milliseconds.
+   *
+   * Print out a message if it timed out.
+   */
+  lazy val run = fib(20)
+}
+
+object RaceExample extends ZIOAppDefault {
+  def loadFromCache: Task[String] =
+    ZIO.succeed("Loaded from cache!").delay(1.second)
+
+  def loadFromDB: Task[String] =
+    ZIO.succeed("Loaded from DB!").delay(500.millis)
+
+  /**
+   * EXERCISE
+   *
+   * Use `ZIO#race` to race the preceding two tasks and print out the
+   * winning success value.
+   *
+   */
+  lazy val run = ???
+}
+
 object AlarmAppImproved extends ZIOAppDefault {
 
   import java.io.IOException
