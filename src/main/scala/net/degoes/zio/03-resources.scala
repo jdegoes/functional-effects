@@ -175,8 +175,13 @@ object CatIncremental extends ZIOAppDefault {
    * HINT: `ZIO.acquireRelease` is the easiest way to do this!
    */
   object FileHandle {
-    final def open(file: String): ZIO[Any, IOException, FileHandle] =
-      ZIO.attemptBlockingIO(new FileHandle(new FileInputStream(file)))
+    final def open(file: String): ZIO[Scope, IOException, FileHandle] =
+      ZIO.uninterruptible {
+        for {
+          fileHandle <- ZIO.attemptBlockingIO(new FileHandle(new FileInputStream(file)))
+          _          <- ZIO.addFinalizer(fileHandle.close.orDie)
+        } yield fileHandle
+      }
   }
 
   /**
@@ -204,7 +209,12 @@ object CatIncremental extends ZIOAppDefault {
          * Open the specified file, safely create and use a file handle to
          * incrementally dump the contents of the file to standard output.
          */
-        ???
+        ZIO.scoped {
+          for {
+            fh <- FileHandle.open(file)
+            _  <- cat(fh)
+          } yield ()
+        }
 
       case _ => Console.printLine("Usage: cat <file>")
     }

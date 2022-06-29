@@ -1,8 +1,15 @@
 package net.degoes.zio
 
 import zio._
+import java.io.IOException
 
 object Retry {
+  // Schedule[-Env, -In, +Out]
+
+  // Schedule A: |XXXXXXXXXX|             |XXXXXXXXXX|             |XXXXXXX|   |XXX|  |XX|
+  // Schedule B:     |XXXXXX|  |XXXXXX|            |XXXXXXX|          |XXX|  |XX|
+  // A isect  B:     |XXXXXX|                      |X|                |XXX|    
+  // A union  B: |XXXXXXXXXX|  |XXXXXX|   |XXXXXXXXXXXXXXXX|       |XXXXXXX| |XXXXX|  |XX|
 
   /**
    * EXERCISE

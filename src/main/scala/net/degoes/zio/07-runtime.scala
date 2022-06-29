@@ -11,13 +11,23 @@ object CustomRuntime {
 
   final case class AppConfig(name: String)
 
+  def myZioMethod(): ZIO[Any, Throwable, Unit] = 
+    for {
+      runtime <- ZIO.runtime
+    } yield {
+      Unsafe.unsafe { implicit u =>
+        runtime.unsafe.run(Console.printLine("Hello World!")).getOrThrow()
+      }
+    }  
+
   /**
    * EXERCISE
    *
    * Create a custom runtime that bundles a value of type `AppConfig` into the
    * environment.
    */
-  lazy val customRuntime = Runtime(defaultEnvironment, defaultFiberRefs, defaultRuntimeFlags)
+  lazy val customRuntime = 
+    Runtime(defaultEnvironment ++ ZEnvironment(AppConfig("My App")), defaultFiberRefs, defaultRuntimeFlags)
 
   val program: ZIO[AppConfig, IOException, Unit] =
     for {
@@ -38,7 +48,9 @@ object CustomRuntime {
    * or `Unsafe.unsafe { ... }` (Scala 3) in order to call `run`.
    */
   def main(args: Array[String]): Unit =
-    ???
+    Unsafe.unsafe { implicit u => 
+      customRuntime.unsafe.run(program).getOrThrow()
+    }
 }
 object ThreadPool extends ZIOAppDefault {
 

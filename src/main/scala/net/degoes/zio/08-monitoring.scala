@@ -13,7 +13,7 @@ object SimpleLogging extends ZIOAppDefault {
   val program =
     for {
       ref   <- Ref.make(0)
-      _     <- ZIO.foreachPar(0 to 10)(i => ref.update(_ + i))
+      _     <- ZIO.foreachPar(0 to 10)(i => ZIO.log(s"Before update: ${i}") *> ref.update(_ + i))
       value <- ref.get
     } yield value
 
@@ -22,9 +22,14 @@ object SimpleLogging extends ZIOAppDefault {
    *
    * Surround `program` in `LogLevel.Error` to change its log level.
    */
-  val program2: ZIO[Any, Nothing, Int] = program
+  val program2: ZIO[Any, Nothing, Int] = 
+    ZIO.logAnnotate("username", "sherlockholmes") {
+      ZIO.logLevel(LogLevel.Info) {
+        program
+      }
+    }
 
-  val run = program *> program2
+  val run = program *> program2 <* ZIO.logError("Uh oh!")
 }
 
 object LogSpan extends ZIOAppDefault {
@@ -53,7 +58,7 @@ object CounterExample extends ZIOAppDefault {
    * Use the constructors in `Metric` to make a counter metric that accepts
    * integers as input.
    */
-  lazy val requestCounter: Metric.Counter[Int] = ???
+  lazy val requestCounter: Metric.Counter[Int] = Metric.counterInt("request-counter")
 
   /**
    * EXERCISE
@@ -61,7 +66,7 @@ object CounterExample extends ZIOAppDefault {
    * Use methods on the counter to increment the counter on every request.
    */
   def processRequest(request: Request): Task[Response] =
-    ZIO.succeed(Response("OK"))
+    requestCounter.increment *> ZIO.succeed(Response("OK"))
 
   /**
    * EXERCISE
